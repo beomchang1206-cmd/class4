@@ -264,25 +264,6 @@ export default function Home() {
             alert("🎉 성공! 100XP를 획득했습니다.");
             checkAndLoginUser(currentUser.name); fetchRankings();
           }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95 mb-2">출석 체크</button>
-
-          {/* 🔔 TypeScript 에러를 강제로 무시하고 팝업을 요청하는 버튼 */}
-          <button
-            onClick={async () => {
-              try {
-                // (OneSignal as any)를 사용해 빌드 에러를 우회합니다.
-                if ((OneSignal as any).Slidedown) {
-                  await (OneSignal as any).Slidedown.prompt();
-                } else {
-                  await (OneSignal as any).showSlidedownPrompt();
-                }
-              } catch (err) {
-                console.error("알림 요청 에러:", err);
-              }
-            }}
-            className="text-[10px] text-white/70 underline block mt-2 mx-auto"
-          >
-            알림 권한 다시 요청하기
-          </button>
         </div>
       </div>
     </div>
