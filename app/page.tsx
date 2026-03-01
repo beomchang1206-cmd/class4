@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../utils/supabase";
+import confetti from "canvas-confetti";
 import OneSignal from 'react-onesignal';
 
 const SUBJECT_LIST = [
