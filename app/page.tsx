@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../utils/supabase";
+import OneSignal from 'react-onesignal';
 
 const SUBJECT_LIST = [
   "공통", "21세기 문학탐구(월3,화3,목6,금4)", "21세기 문학탐구(월4,화1,수2,목4)",
@@ -35,41 +36,53 @@ export default function Home() {
   const [formContent, setFormContent] = useState("");
   const [formDate, setFormDate] = useState("");
 
-  // --- ⏱️ 스터디 타이머 상태 ---
+  // ⏱️ 스터디 타이머 상태
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [studySeconds, setStudySeconds] = useState(0);
   const timerRef = useRef<any>(null);
 
-  // 폭죽 효과
-  const fireConfetti = (count = 150) => {
-    confetti({ particleCount: count, spread: 70, origin: { y: 0.6 } });
-  };
-
   useEffect(() => {
+    // 🔔 OneSignal 초기화 (환경 변수 사용)
+    const initOneSignal = async () => {
+      try {
+        await OneSignal.init({
+          appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || "",
+          allowLocalhostAsSecureOrigin: true,
+          notifyButton: { enable: true },
+        });
+
+        if (currentUser) {
+          OneSignal.login(currentUser.name);
+        }
+      } catch (err) {
+        console.error("OneSignal 에러:", err);
+      }
+    };
+
+    initOneSignal();
     fetchRankings();
     fetchNotice();
+
     const savedName = localStorage.getItem("userName");
     if (savedName) checkAndLoginUser(savedName);
-  }, []);
+  }, [currentUser]);
 
-  // --- 🚫 탭 전환 감지 로직 (부정행위 방지) ---
+  // 🚫 부정행위 방지: 탭 전환 시 타이머 중단
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && isTimerActive) {
-        stopTimer();
-        alert("⚠️ 다른 탭으로 이동하여 타이머가 중단되었습니다! 정직하게 공부합시다.");
+        setIsTimerActive(false);
+        alert("⚠️ 다른 창으로 이동하여 타이머가 중단되었습니다!");
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [isTimerActive]);
 
-  // 타이머 틱 로직
+  // 타이머 작동 로직
   useEffect(() => {
     if (isTimerActive) {
-      timerRef.current = setInterval(() => {
-        setStudySeconds((prev) => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setStudySeconds(s => s + 1), 1000);
     } else {
       clearInterval(timerRef.current);
     }
@@ -77,7 +90,7 @@ export default function Home() {
   }, [isTimerActive]);
 
   const startTimer = () => {
-    if (!currentUser) return alert("로그인 후 이용 가능합니다!");
+    if (!currentUser) return alert("로그인이 필요합니다!");
     setIsTimerActive(true);
     setStudySeconds(0);
   };
@@ -85,31 +98,20 @@ export default function Home() {
   const stopTimer = async () => {
     if (!isTimerActive) return;
     setIsTimerActive(false);
-
     const minutes = Math.floor(studySeconds / 60);
-    const earnedXp = minutes * 2; // 1분당 2XP 보상
+    const earnedXp = minutes * 2; // 1분당 2XP
 
     if (earnedXp > 0 && currentUser) {
       const newXp = (currentUser.total_xp || 0) + earnedXp;
       await supabase.from("users").update({ total_xp: newXp }).eq("id", currentUser.id);
-      await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: 'study_timer', points: earnedXp }]);
-
-      fireConfetti(100 + earnedXp);
-      alert(`📚 ${minutes}분 공부 완료! ${earnedXp}XP를 획득했습니다.`);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      alert(`📚 ${minutes}분 공부 완료! ${earnedXp}XP 획득!`);
       checkAndLoginUser(currentUser.name);
       fetchRankings();
     }
     setStudySeconds(0);
   };
 
-  const formatTime = (totalSeconds: number) => {
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    return `${h > 0 ? h + ":" : ""}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
-
-  // --- 기존 함수들 (Login, Fetch 등) ---
   const fetchRankings = async () => {
     const { data } = await supabase.from("users").select("name, total_xp").order("total_xp", { ascending: false }).limit(5);
     if (data) setRankings(data);
@@ -118,23 +120,24 @@ export default function Home() {
   const fetchNotice = async () => {
     const vnTime = new Date((new Date()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
     const todayStr = `${vnTime.getFullYear()}-${String(vnTime.getMonth() + 1).padStart(2, '0')}-${String(vnTime.getDate()).padStart(2, '0')}`;
+
+    // 과거 공지 자동 삭제
     await supabase.from("notices").delete().lt("target_date", todayStr);
-    const { data } = await supabase.from("notices").select("*").gte("target_date", todayStr).order("target_date", { ascending: true }).limit(20);
+    const { data } = await supabase.from("notices").select("*").gte("target_date", todayStr).order("target_date", { ascending: true });
     setPendingNotices(data || []);
   };
 
   const checkAndLoginUser = async (name: string) => {
-    const { data: users } = await supabase.from("users").select("*").eq("name", name.trim());
-    if (users && users.length > 0) {
-      setCurrentUser(users[0]);
-      localStorage.setItem("userName", users[0].name);
+    const { data } = await supabase.from("users").select("*").eq("name", name.trim()).single();
+    if (data) {
+      setCurrentUser(data);
+      localStorage.setItem("userName", data.name);
     }
   };
 
-  const getRequiredXp = (level: number) => 100 + (Math.pow(level, 2) * 50);
   const getStatus = (totalXp: number, name: string) => {
-    let level = 1; let curXp = totalXp || 0; let reqXp = getRequiredXp(level);
-    while (curXp >= reqXp) { curXp -= reqXp; level++; reqXp = getRequiredXp(level); }
+    let level = 1; let curXp = totalXp || 0; let reqXp = 100 + (Math.pow(level, 2) * 50);
+    while (curXp >= reqXp) { curXp -= reqXp; level++; reqXp = 100 + (Math.pow(level, 2) * 50); }
     const progress = (curXp / reqXp) * 100;
     let emoji = "🥚"; let sName = `${name}의 알`; let anime = "animate-pulse";
     if (level >= 10) { emoji = "🐉"; sName = `수호신 ${name}`; anime = "animate-float"; }
@@ -149,24 +152,24 @@ export default function Home() {
   const handleCheckIn = async () => {
     if (!currentUser) return;
     const vnTime = new Date((new Date()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    const todayStr = `earlybird_${vnTime.getFullYear()}-${vnTime.getMonth() + 1}-${vnTime.getDate()}`;
-    const { data: existing } = await supabase.from("contributions").select("*").eq("user_id", currentUser.id).eq("action_type", todayStr).single();
-    if (existing) return alert("이미 인증 완료!");
+    const todayKey = `early_${vnTime.getFullYear()}-${vnTime.getMonth() + 1}-${vnTime.getDate()}`;
+    const { data: existing } = await supabase.from("contributions").select("*").eq("user_id", currentUser.id).eq("action_type", todayKey).single();
 
-    const oldLv = getStatus(currentUser.total_xp, "").level;
-    const newXp = (currentUser.total_xp || 0) + 100;
-    const newLv = getStatus(newXp, "").level;
-
-    await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: todayStr, points: 100 }]);
-    await supabase.from("users").update({ total_xp: newXp }).eq("id", currentUser.id);
-
-    if (newLv > oldLv) { fireConfetti(); alert(`🎊 진화 성공! Lv.${newLv}`); }
-    else alert("🎉 100XP 획득!");
+    if (existing) return alert("이미 완료!");
+    await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: todayKey, points: 100 }]);
+    await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
+    alert("🎉 100XP 획득!");
     checkAndLoginUser(currentUser.name); fetchRankings();
   };
 
+  const submitNotice = async () => {
+    if (!formContent || !formDate) return alert("내용을 입력하세요!");
+    await supabase.from("notices").insert([{ subject: formSubject, content: formContent, target_subject: formSubject, target_date: formDate }]);
+    setIsModalOpen(false); setFormContent(""); fetchNotice();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans overflow-hidden text-gray-900">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
       <style>{`
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         .animate-float { animation: float 3s ease-in-out infinite; }
@@ -176,38 +179,53 @@ export default function Home() {
         .animate-bounce { animation: bounce-s 1.5s ease-in-out infinite; }
       `}</style>
 
-      {/* 모달 등 생략 (동일) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h2 className="text-2xl font-black mb-4">📝 새 공지 작성</h2>
+            <select className="w-full border rounded-lg p-2 mb-4 bg-white" value={formSubject} onChange={(e) => setFormSubject(e.target.value)}>
+              {SUBJECT_LIST.map(sub => <option key={sub} value={sub}>{sub}</option>)}
+            </select>
+            <input type="date" className="w-full border rounded-lg p-2 mb-4 bg-white" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
+            <textarea className="w-full border rounded-lg p-2 mb-6 bg-white" rows={3} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="준비물을 적어주세요" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-200 rounded-lg">취소</button>
+              <button onClick={submitNotice} className="px-4 py-2 bg-blue-500 text-white rounded-lg">등록</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <header className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-black">4기 🐲</h1>
-          <p className="text-gray-500 mt-1">{currentUser ? `${currentUser.name}님, 오늘도 힘냅시다!` : "로그인을 해주세요."}</p>
+          <h1 className="text-3xl font-black italic">4기 🐲 DASHBOARD</h1>
+          <p className="text-gray-500">{currentUser ? `${currentUser.name}님, 환영합니다!` : "로그인이 필요합니다."}</p>
         </div>
         {!currentUser && <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">로그인</button>}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {/* 공지사항 (2/3) */}
-        <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[350px]">
+        {/* 공지사항 리스트 (2/3) */}
+        <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[400px]">
           <div className="flex justify-between items-center mb-4 border-b pb-4">
-            <h2 className="text-2xl font-black">🚨 수행평가 및 준비물</h2>
+            <h2 className="text-2xl font-black">🚨 생존 템</h2>
             <button onClick={() => setIsModalOpen(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-red-600 transition">+ 추가</button>
           </div>
           <div className="flex flex-col gap-3 overflow-y-auto pr-2">
-            {pendingNotices.map(n => (
+            {pendingNotices.length > 0 ? pendingNotices.map(n => (
               <div key={n.id} className="bg-red-50/50 p-4 rounded-2xl border border-red-100">
                 <div className="flex gap-2 mb-1">
-                  <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded">{n.target_subject}</span>
+                  <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded">{n.subject}</span>
                   <span className="text-[10px] font-bold text-gray-400">📅 {n.target_date}</span>
                 </div>
-                <p className="text-gray-700 font-medium text-sm">{n.content}</p>
+                <p className="text-gray-800 font-medium text-sm whitespace-pre-wrap">{n.content}</p>
               </div>
-            ))}
+            )) : <p className="text-center py-10 text-gray-400">등록된 공지가 없습니다. ☕</p>}
           </div>
         </div>
 
-        {/* 🏆 마스코트 세로 배치 (1/3) */}
+        {/* 마스코트 세로 배치 (1/3) */}
         <div className="flex flex-col gap-6">
           <div className="bg-blue-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[280px]">
             <span className="absolute top-4 left-4 bg-yellow-400 text-blue-900 text-[10px] font-black px-2 py-0.5 rounded-full">RANK #1</span>
@@ -228,42 +246,42 @@ export default function Home() {
                   <div className="h-full bg-emerald-400 transition-all duration-1000" style={{ width: `${myStatus?.progress}%` }}></div>
                 </div>
               </>
-            ) : <p className="text-white/50 text-sm">로그인 필요</p>}
+            ) : <p className="text-white/50 text-sm">로그인이 필요합니다.</p>}
           </div>
         </div>
 
-        {/* 🏆 명예의 전당 (1/3) */}
-        <div className="bg-white rounded-3xl p-6 shadow-md border flex flex-col h-[250px]">
+        {/* 명예의 전당 (1/3) */}
+        <div className="bg-white rounded-3xl p-6 shadow-md border flex flex-col h-[300px]">
           <h2 className="text-lg font-black mb-4">🏆 명예의 전당</h2>
           <div className="flex flex-col gap-3">
             {rankings.map((u, i) => (
               <div key={i} className="flex justify-between items-center text-sm font-bold text-gray-700">
                 <span>{i + 1}위 {u.name}</span>
-                <span className="text-blue-600">{u.total_xp || 0} XP</span>
+                <span className="text-blue-600 font-black">{u.total_xp || 0} XP</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ⏳ 스터디 타이머 (1/3) - 새로 추가됨! */}
-        <div className={`rounded-3xl p-6 shadow-md border flex flex-col items-center justify-center text-center transition-colors duration-500 h-[250px] ${isTimerActive ? 'bg-emerald-50 border-emerald-200' : 'bg-white'}`}>
+        {/* 스터디 타이머 (1/3) */}
+        <div className={`rounded-3xl p-6 shadow-md border flex flex-col items-center justify-center text-center transition-colors duration-500 h-[300px] ${isTimerActive ? 'bg-emerald-50 border-emerald-200' : 'bg-white'}`}>
           <h2 className="text-lg font-black mb-2 flex items-center gap-2">📖 스터디 타이머</h2>
           <div className={`text-4xl font-mono font-black mb-4 ${isTimerActive ? 'text-emerald-600' : 'text-gray-400'}`}>
-            {formatTime(studySeconds)}
+            {Math.floor(studySeconds / 60)}:{String(studySeconds % 60).padStart(2, '0')}
           </div>
           {isTimerActive ? (
-            <button onClick={stopTimer} className="bg-red-500 text-white px-8 py-2 rounded-xl font-bold shadow-md hover:bg-red-600 transition active:scale-95">공부 종료</button>
+            <button onClick={stopTimer} className="bg-red-500 text-white px-8 py-2 rounded-xl font-bold shadow-md active:scale-95">공부 종료</button>
           ) : (
-            <button onClick={startTimer} className="bg-emerald-500 text-white px-8 py-2 rounded-xl font-bold shadow-md hover:bg-emerald-600 transition active:scale-95">공부 시작</button>
+            <button onClick={startTimer} className="bg-emerald-500 text-white px-8 py-2 rounded-xl font-bold shadow-md active:scale-95">공부 시작</button>
           )}
-          <p className="text-[10px] text-gray-400 mt-3">* 1분당 2XP 적립! 다른 탭 이동 시 무효 처리됩니다.</p>
+          <p className="text-[10px] text-gray-400 mt-3">* 1분당 2XP 적립! 탭 이동 시 무효.</p>
         </div>
 
         {/* 얼리버드 체크인 (1/3) */}
-        <div className="bg-gradient-to-r from-orange-400 to-rose-400 rounded-3xl p-6 shadow-md text-white flex flex-col justify-center text-center h-[250px]">
-          <h2 className="text-xl font-black mb-2 italic">⏰ EARLY BIRD</h2>
-          <p className="text-xs font-medium opacity-90 mb-4">7:30 전 등교하고 100XP!</p>
-          <button onClick={handleCheckIn} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95">인증하기</button>
+        <div className="bg-gradient-to-r from-orange-400 to-rose-400 rounded-3xl p-6 shadow-md text-white flex flex-col justify-center text-center h-[300px]">
+          <h2 className="text-xl font-black mb-2 italic text-yellow-200">⏰ EARLY BIRD</h2>
+          <p className="text-xs font-medium opacity-90 mb-4 text-white">7:30 전 등교하고 100XP!</p>
+          <button onClick={handleCheckIn} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95">오늘의 인증</button>
         </div>
 
       </div>
