@@ -37,8 +37,21 @@ export default function Home() {
           // image_c0009b.png의 notifyButton 에러를 해결하기 위해 promptOptions로 변경
           promptOptions: {
             slidedown: {
-              enabled: true,
-              autoPrompt: true,
+              prompts: [
+                {
+                  type: "push",
+                  autoPrompt: true,
+                  text: {
+                    actionMessage: "준비물과 공지사항 알림을 받으시겠습니까?",
+                    acceptButton: "허용",
+                    cancelButton: "취소",
+                  },
+                  delay: {
+                    pageViews: 1,
+                    timeDelay: 5,
+                  }
+                }
+              ]
             }
           }
         });
