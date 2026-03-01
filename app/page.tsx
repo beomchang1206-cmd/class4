@@ -265,9 +265,16 @@ export default function Home() {
             checkAndLoginUser(currentUser.name); fetchRankings();
           }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95 mb-2">출석 체크</button>
 
+          {/* 🔔 알림 팝업 수동 요청 버튼 */}
           <button
-            onClick={() => OneSignal.Slidedown.prompt()}
-            className="text-[10px] text-white/70 underline"
+            onClick={async () => {
+              try {
+                await OneSignal.showSlidedownPrompt();
+              } catch (err) {
+                console.error("알림 요청 에러:", err);
+              }
+            }}
+            className="text-[10px] text-white/70 underline block mt-2 mx-auto"
           >
             알림 권한 다시 요청하기
           </button>
