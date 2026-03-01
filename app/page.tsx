@@ -266,6 +266,7 @@ export default function Home() {
             alert("🎉 성공! 100XP를 획득했습니다.");
             checkAndLoginUser(currentUser.name); fetchRankings();
           }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95">출석 체크</button>
+          importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
         </div>
       </div>
     </div>
