@@ -72,7 +72,6 @@ export default function Home() {
   const [studySeconds, setStudySeconds] = useState(0);
   const timerRef = useRef<any>(null);
 
-  // 🚨 전교생에게 실시간 알림을 쏘는 마법의 함수
   const sendGlobalNotification = async (title: string, message: string) => {
     try {
       await fetch('/api/notify', {
@@ -97,11 +96,7 @@ export default function Home() {
                 {
                   type: "push",
                   autoPrompt: true,
-                  text: {
-                    actionMessage: "알림을 받으시겠습니까?",
-                    acceptButton: "허용",
-                    cancelButton: "취소",
-                  },
+                  text: { actionMessage: "알림을 받으시겠습니까?", acceptButton: "허용", cancelButton: "취소" },
                   delay: { pageViews: 1, timeDelay: 5 }
                 }
               ]
@@ -150,7 +145,6 @@ export default function Home() {
     setIsTimerActive(true);
     setStudySeconds(0);
 
-    // 📢 누군가 공부를 시작하면 전체 알림 쏘기!
     sendGlobalNotification(
       "🔥 스터디 모드 온!",
       `${currentUser.name}님이 방금 공부를 시작했습니다. 다들 자극받고 파이팅합시다!`
@@ -200,9 +194,7 @@ export default function Home() {
           const subjectsArray = cleanedString.split('","').map((s: string) => s.replace(/"/g, ''));
 
           const tags: Record<string, string> = {};
-          subjectsArray.forEach((subj: string) => {
-            tags[subj] = "true";
-          });
+          subjectsArray.forEach((subj: string) => { tags[subj] = "true"; });
 
           if ((OneSignal as any).User) {
             await (OneSignal as any).User.addTags(tags);
@@ -218,15 +210,28 @@ export default function Home() {
     }
   };
 
+  // 🚨 [새로워진 경험치 & 레벨업 계산기]
   const getStatus = (totalXp: number, name: string) => {
-    let level = 1; let curXp = totalXp || 0; let reqXp = 100 + (Math.pow(level, 2) * 50);
-    while (curXp >= reqXp) { curXp -= reqXp; level++; reqXp = 100 + (Math.pow(level, 2) * 50); }
-    const progress = (curXp / reqXp) * 100;
+    let level = 1;
+    let curXp = totalXp || 0;
+    let reqXp = 100 + (Math.pow(level, 2) * 50); // 레벨이 오를수록 다음 레벨업 요구치가 뻥튀기 됩니다!
+
+    while (curXp >= reqXp) {
+      curXp -= reqXp;
+      level++;
+      reqXp = 100 + (Math.pow(level, 2) * 50);
+    }
+
+    // 남은 경험치와 퍼센테이지 계산
+    const progress = Math.min((curXp / reqXp) * 100, 100);
+    const remXp = reqXp - curXp;
+
     let emoji = "🥚"; let sName = `${name}의 알`; let anime = "animate-pulse";
     if (level >= 10) { emoji = "🐉"; sName = `수호신 ${name}`; anime = "animate-float"; }
     else if (level >= 5) { emoji = "🦅"; sName = `불사조 ${name}`; anime = "animate-wiggle"; }
     else if (level >= 2) { emoji = "🐣"; sName = `병아리 ${name}`; anime = "animate-bounce"; }
-    return { level, emoji, sName, anime, progress };
+
+    return { level, emoji, sName, anime, progress, remXp };
   };
 
   const mStatus = getStatus(rankings[0]?.total_xp, rankings[0]?.name || "개척자");
@@ -275,7 +280,7 @@ export default function Home() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[450px]">
+        <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[460px]">
           <div className="flex justify-between items-center mb-4 border-b pb-4">
             <h2 className="text-2xl font-black">🚨 수행평가 및 준비물</h2>
             <button onClick={() => setIsModalOpen(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-red-600 transition">+ 추가</button>
@@ -294,18 +299,32 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="bg-blue-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[210px]">
+          {/* 1위 마스코트 위젯 (높이를 조절해서 진행바가 들어갈 자리를 만들었습니다) */}
+          <div className="bg-blue-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full">
             <span className="absolute top-4 left-4 bg-yellow-400 text-blue-900 text-[10px] font-black px-2 py-0.5 rounded-full">1위 마스코트</span>
-            <div className={`text-6xl mb-2 ${mStatus.anime}`}>{mStatus.emoji}</div>
+            <div className={`text-6xl mb-1 mt-3 ${mStatus.anime}`}>{mStatus.emoji}</div>
             <h2 className="text-sm font-black">{mStatus.sName} (Lv.{mStatus.level})</h2>
+
+            {/* 🚨 진행률 바 & 남은 XP (1위) */}
+            <div className="w-full max-w-[150px] bg-blue-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
+              <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${mStatus.progress}%` }}></div>
+            </div>
+            <p className="text-[10px] font-bold text-blue-200">다음 진화까지: {mStatus.remXp} XP</p>
           </div>
 
-          <div className="bg-indigo-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[210px]">
+          {/* 나의 마스코트 위젯 */}
+          <div className="bg-indigo-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full">
             <span className="absolute top-4 left-4 bg-indigo-400 text-white text-[10px] font-black px-2 py-0.5 rounded-full">나의 마스코트</span>
             {currentUser ? (
               <>
-                <div className={`text-6xl mb-2 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
+                <div className={`text-6xl mb-1 mt-3 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
                 <h2 className="text-sm font-black">{myStatus?.sName} (Lv.{myStatus?.level})</h2>
+
+                {/* 🚨 진행률 바 & 남은 XP (내꺼) */}
+                <div className="w-full max-w-[150px] bg-indigo-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
+                  <div className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${myStatus?.progress}%` }}></div>
+                </div>
+                <p className="text-[10px] font-bold text-indigo-200">다음 진화까지: {myStatus?.remXp} XP</p>
               </>
             ) : <p className="text-white/50 text-sm">로그인 시 공개됩니다.</p>}
           </div>
@@ -342,7 +361,6 @@ export default function Home() {
           <button onClick={async () => {
             if (!currentUser) return;
 
-            // 🚨 [핵심 업데이트] 베트남 시간으로 7시 30분이 넘었는지 철저히 검사합니다!
             const vnTime = new Date((new Date()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
             const hours = vnTime.getHours();
             const minutes = vnTime.getMinutes();
@@ -359,7 +377,6 @@ export default function Home() {
             await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
             alert("🎉 성공! 100XP를 획득했습니다.");
 
-            // 📢 누군가 일찍 등교하면 전체 알림 쏘기!
             sendGlobalNotification(
               "🌅 얼리버드 기상!",
               `대단해요! ${currentUser.name}님이 7:30 전 등교하여 얼리버드 체크를 완료했습니다 👏`
