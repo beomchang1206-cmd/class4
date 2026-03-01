@@ -85,7 +85,7 @@ export default function Home() {
                   type: "push",
                   autoPrompt: true,
                   text: {
-                    actionMessage: "준비물과 공지사항 알림을 받으시겠습니까?",
+                    actionMessage: "알림을 받으시겠습니까?",
                     acceptButton: "허용",
                     cancelButton: "취소",
                   },
@@ -172,31 +172,26 @@ export default function Home() {
   };
 
   const checkAndLoginUser = async (name: string) => {
-    // 1. Supabase에서 학생 이름으로 정보 찾아오기
     const { data } = await supabase.from("users").select("*").eq("name", name.trim()).single();
 
     if (data) {
       setCurrentUser(data);
       localStorage.setItem("userName", data.name);
 
-      // 🚨 [새로 추가된 핵심 기능] OneSignal 과목 이름표(Tag) 붙이기!
       try {
         if (data.selected_subjects) {
-          // Supabase에 있는 {"물리학Ⅱ...", "화학Ⅱ..."} 문자열에서 괄호와 따옴표를 깔끔하게 떼어냅니다.
           const cleanedString = data.selected_subjects.replace(/^\{|\}$/g, '');
           const subjectsArray = cleanedString.split('","').map((s: string) => s.replace(/"/g, ''));
 
-          // OneSignal이 이해할 수 있도록 { "과목명": "true" } 형태로 만듭니다.
           const tags: Record<string, string> = {};
           subjectsArray.forEach((subj: string) => {
             tags[subj] = "true";
           });
 
-          // 폰에 이름표 부착! (TypeScript 에러 방지를 위해 as any 사용)
           if ((OneSignal as any).User) {
-            await (OneSignal as any).User.addTags(tags); // 최신 버전
+            await (OneSignal as any).User.addTags(tags);
           } else {
-            await (OneSignal as any).sendTags(tags); // 구 버전
+            await (OneSignal as any).sendTags(tags);
           }
           console.log("✅ 과목 이름표 부착 완료:", tags);
         }
@@ -204,7 +199,7 @@ export default function Home() {
         console.error("이름표 부착 실패:", err);
       }
     } else {
-      alert("등록된 이름이 없습니다."); // DB에 이름이 없을 경우
+      alert("등록된 이름이 없습니다.");
     }
   };
 
@@ -254,12 +249,34 @@ export default function Home() {
         </div>
       )}
 
-      <header className="mb-8 flex justify-between items-end">
+      <header className="mb-8 flex justify-between items-end flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-black italic text-blue-600">4기 🐲 DASHBOARD</h1>
           <p className="text-gray-500 font-bold">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
         </div>
-        {!currentUser && <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">로그인</button>}
+        <div className="flex items-center gap-2">
+          {/* 🚨 테스트를 위한 태그 강제 부착 버튼입니다! */}
+          <button
+            onClick={async () => {
+              try {
+                const testSubject = "물리학Ⅱ(월1,화2,수7,금3)";
+                if ((OneSignal as any).User) {
+                  await (OneSignal as any).User.addTags({ [testSubject]: "true" });
+                } else {
+                  await (OneSignal as any).sendTags({ [testSubject]: "true" });
+                }
+                alert(`🏷️ 성공! [${testSubject}] 이름표가 아이폰에 부착되었습니다!\n\n이제 크론봇을 실행해보세요.`);
+              } catch (err) {
+                alert("이름표 부착 실패 ㅠㅠ");
+              }
+            }}
+            className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold shadow-md hover:bg-purple-700 transition"
+          >
+            🛠️ 태그 강제 부착
+          </button>
+
+          {!currentUser && <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">로그인</button>}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
