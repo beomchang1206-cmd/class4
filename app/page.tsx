@@ -263,7 +263,14 @@ export default function Home() {
             await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
             alert("🎉 성공! 100XP를 획득했습니다.");
             checkAndLoginUser(currentUser.name); fetchRankings();
-          }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95">출석 체크</button>
+          }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95 mb-2">출석 체크</button>
+
+          <button
+            onClick={() => OneSignal.Slidedown.prompt()}
+            className="text-[10px] text-white/70 underline"
+          >
+            알림 권한 다시 요청하기
+          </button>
         </div>
       </div>
     </div>
