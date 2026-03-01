@@ -6,9 +6,6 @@ export async function POST(req: Request) {
         const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
         const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
-        if (!appId || !restApiKey) throw new Error("OneSignal 설정 누락");
-
-        // 모두에게 알림 쏘기!
         await fetch("https://onesignal.com/api/v1/notifications", {
             method: "POST",
             headers: {
@@ -17,7 +14,7 @@ export async function POST(req: Request) {
             },
             body: JSON.stringify({
                 app_id: appId,
-                included_segments: ["Total Subscriptions"], // 🚨 과목 상관없이 '구독한 모든 사람'에게 보냅니다!
+                included_segments: ["Total Subscriptions"],
                 headings: { "en": title },
                 contents: { "en": message }
             })
