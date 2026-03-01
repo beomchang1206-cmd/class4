@@ -1,0 +1,23 @@
+{
+    "name": "4기 대시보드",
+    "short_name": "4기",
+    "description": "4기 학생들을 위한 준비물 및 랭킹 대시보드",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
