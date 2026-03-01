@@ -28,13 +28,11 @@ export default function Home() {
   const timerRef = useRef<any>(null);
 
   useEffect(() => {
-    // 🔔 OneSignal 초기화 (에러 수정 버전)
     const initOneSignal = async () => {
       try {
         await OneSignal.init({
           appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || "",
           allowLocalhostAsSecureOrigin: true,
-          // image_c0009b.png의 notifyButton 에러를 해결하기 위해 promptOptions로 변경
           promptOptions: {
             slidedown: {
               prompts: [
@@ -266,7 +264,6 @@ export default function Home() {
             alert("🎉 성공! 100XP를 획득했습니다.");
             checkAndLoginUser(currentUser.name); fetchRankings();
           }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95">출석 체크</button>
-          importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
         </div>
       </div>
     </div>
