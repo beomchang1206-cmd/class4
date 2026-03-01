@@ -72,6 +72,19 @@ export default function Home() {
   const [studySeconds, setStudySeconds] = useState(0);
   const timerRef = useRef<any>(null);
 
+  // 🚨 전교생에게 실시간 알림을 쏘는 마법의 함수
+  const sendGlobalNotification = async (title: string, message: string) => {
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message })
+      });
+    } catch (err) {
+      console.error("전체 알림 발송 실패:", err);
+    }
+  };
+
   useEffect(() => {
     const initOneSignal = async () => {
       try {
@@ -89,10 +102,7 @@ export default function Home() {
                     acceptButton: "허용",
                     cancelButton: "취소",
                   },
-                  delay: {
-                    pageViews: 1,
-                    timeDelay: 5,
-                  }
+                  delay: { pageViews: 1, timeDelay: 5 }
                 }
               ]
             }
@@ -139,6 +149,12 @@ export default function Home() {
     if (!currentUser) return alert("로그인이 필요합니다!");
     setIsTimerActive(true);
     setStudySeconds(0);
+
+    // 📢 누군가 공부를 시작하면 전체 알림 쏘기!
+    sendGlobalNotification(
+      "🔥 스터디 모드 온!",
+      `${currentUser.name}님이 방금 공부를 시작했습니다. 다들 자극받고 파이팅합시다!`
+    );
   };
 
   const stopTimer = async () => {
@@ -193,7 +209,6 @@ export default function Home() {
           } else {
             await (OneSignal as any).sendTags(tags);
           }
-          console.log("✅ 과목 이름표 부착 완료:", tags);
         }
       } catch (err) {
         console.error("이름표 부착 실패:", err);
@@ -255,26 +270,6 @@ export default function Home() {
           <p className="text-gray-500 font-bold">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* 🚨 테스트를 위한 태그 강제 부착 버튼입니다! */}
-          <button
-            onClick={async () => {
-              try {
-                const testSubject = "물리학Ⅱ(월1,화2,수7,금3)";
-                if ((OneSignal as any).User) {
-                  await (OneSignal as any).User.addTags({ [testSubject]: "true" });
-                } else {
-                  await (OneSignal as any).sendTags({ [testSubject]: "true" });
-                }
-                alert(`🏷️ 성공! [${testSubject}] 이름표가 아이폰에 부착되었습니다!\n\n이제 크론봇을 실행해보세요.`);
-              } catch (err) {
-                alert("이름표 부착 실패 ㅠㅠ");
-              }
-            }}
-            className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold shadow-md hover:bg-purple-700 transition"
-          >
-            🛠️ 태그 강제 부착
-          </button>
-
           {!currentUser && <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">로그인</button>}
         </div>
       </header>
@@ -282,7 +277,7 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[450px]">
           <div className="flex justify-between items-center mb-4 border-b pb-4">
-            <h2 className="text-2xl font-black">🚨 준비물 및 공지</h2>
+            <h2 className="text-2xl font-black">🚨 수행평가 및 준비물</h2>
             <button onClick={() => setIsModalOpen(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-red-600 transition">+ 추가</button>
           </div>
           <div className="flex flex-col gap-3 overflow-y-auto pr-2">
@@ -346,13 +341,30 @@ export default function Home() {
           <p className="text-xs font-medium opacity-90 mb-4 text-white">7:30 전 등교하고 100XP 받기!</p>
           <button onClick={async () => {
             if (!currentUser) return;
+
+            // 🚨 [핵심 업데이트] 베트남 시간으로 7시 30분이 넘었는지 철저히 검사합니다!
             const vnTime = new Date((new Date()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+            const hours = vnTime.getHours();
+            const minutes = vnTime.getMinutes();
+
+            if (hours > 7 || (hours === 7 && minutes > 30)) {
+              return alert("⏰ 아쉽지만 얼리버드 마감 시간(07:30)이 지났습니다. 내일 다시 도전해 보세요!");
+            }
+
             const todayKey = `early_${vnTime.getFullYear()}-${vnTime.getMonth() + 1}-${vnTime.getDate()}`;
             const { data: existing } = await supabase.from("contributions").select("*").eq("user_id", currentUser.id).eq("action_type", todayKey).single();
             if (existing) return alert("이미 완료하셨습니다!");
+
             await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: todayKey, points: 100 }]);
             await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
             alert("🎉 성공! 100XP를 획득했습니다.");
+
+            // 📢 누군가 일찍 등교하면 전체 알림 쏘기!
+            sendGlobalNotification(
+              "🌅 얼리버드 기상!",
+              `대단해요! ${currentUser.name}님이 7:30 전 등교하여 얼리버드 체크를 완료했습니다 👏`
+            );
+
             checkAndLoginUser(currentUser.name); fetchRankings();
           }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95 mb-2">출석 체크</button>
         </div>
