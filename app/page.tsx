@@ -172,10 +172,39 @@ export default function Home() {
   };
 
   const checkAndLoginUser = async (name: string) => {
+    // 1. Supabase에서 학생 이름으로 정보 찾아오기
     const { data } = await supabase.from("users").select("*").eq("name", name.trim()).single();
+
     if (data) {
       setCurrentUser(data);
       localStorage.setItem("userName", data.name);
+
+      // 🚨 [새로 추가된 핵심 기능] OneSignal 과목 이름표(Tag) 붙이기!
+      try {
+        if (data.selected_subjects) {
+          // Supabase에 있는 {"물리학Ⅱ...", "화학Ⅱ..."} 문자열에서 괄호와 따옴표를 깔끔하게 떼어냅니다.
+          const cleanedString = data.selected_subjects.replace(/^\{|\}$/g, '');
+          const subjectsArray = cleanedString.split('","').map((s: string) => s.replace(/"/g, ''));
+
+          // OneSignal이 이해할 수 있도록 { "과목명": "true" } 형태로 만듭니다.
+          const tags: Record<string, string> = {};
+          subjectsArray.forEach((subj: string) => {
+            tags[subj] = "true";
+          });
+
+          // 폰에 이름표 부착! (TypeScript 에러 방지를 위해 as any 사용)
+          if ((OneSignal as any).User) {
+            await (OneSignal as any).User.addTags(tags); // 최신 버전
+          } else {
+            await (OneSignal as any).sendTags(tags); // 구 버전
+          }
+          console.log("✅ 과목 이름표 부착 완료:", tags);
+        }
+      } catch (err) {
+        console.error("이름표 부착 실패:", err);
+      }
+    } else {
+      alert("등록된 이름이 없습니다."); // DB에 이름이 없을 경우
     }
   };
 
