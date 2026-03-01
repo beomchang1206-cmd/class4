@@ -265,11 +265,16 @@ export default function Home() {
             checkAndLoginUser(currentUser.name); fetchRankings();
           }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95 mb-2">출석 체크</button>
 
-          {/* 🔔 알림 팝업 수동 요청 버튼 */}
+          {/* 🔔 TypeScript 에러를 강제로 무시하고 팝업을 요청하는 버튼 */}
           <button
             onClick={async () => {
               try {
-                await OneSignal.showSlidedownPrompt();
+                // (OneSignal as any)를 사용해 빌드 에러를 우회합니다.
+                if ((OneSignal as any).Slidedown) {
+                  await (OneSignal as any).Slidedown.prompt();
+                } else {
+                  await (OneSignal as any).showSlidedownPrompt();
+                }
               } catch (err) {
                 console.error("알림 요청 에러:", err);
               }
