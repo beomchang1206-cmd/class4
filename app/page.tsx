@@ -64,18 +64,15 @@ export default function Home() {
   const [pendingNotices, setPendingNotices] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // 공지사항 모달
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubject, setFormSubject] = useState("공통");
   const [formContent, setFormContent] = useState("");
   const [formDate, setFormDate] = useState("");
 
-  // 타이머
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [studySeconds, setStudySeconds] = useState(0);
   const timerRef = useRef<any>(null);
 
-  // Q&A 게시판 모달
   const [isQnaModalOpen, setIsQnaModalOpen] = useState(false);
   const [currentQnaSubject, setCurrentQnaSubject] = useState("");
   const [qnaPosts, setQnaPosts] = useState<any[]>([]);
@@ -210,8 +207,15 @@ export default function Home() {
 
       try {
         if (data.selected_subjects) {
-          const cleanedString = data.selected_subjects.replace(/^\{|\}$/g, '');
-          const subjectsArray = cleanedString.split('","').map((s: string) => s.replace(/"/g, ''));
+          // 🚨 [에러 방어 패치 1] 데이터가 문자열인지 배열인지 확인하고 처리
+          let subjectsArray: string[] = [];
+          if (Array.isArray(data.selected_subjects)) {
+            subjectsArray = data.selected_subjects;
+          } else if (typeof data.selected_subjects === 'string') {
+            const cleanedString = data.selected_subjects.replace(/^\{|\}$/g, '');
+            subjectsArray = cleanedString.split('","').map((s: string) => s.replace(/"/g, ''));
+          }
+
           const tags: Record<string, string> = {};
           subjectsArray.forEach((subj: string) => { tags[subj] = "true"; });
 
@@ -251,12 +255,20 @@ export default function Home() {
   const mStatus = getStatus(rankings[0]?.total_xp, rankings[0]?.name || "개척자");
   const myStatus = currentUser ? getStatus(currentUser.total_xp, currentUser.name) : null;
 
-  // 공지사항 등 특정 분반 타겟팅을 위한 원본 과목 리스트
-  const rawSubjects: string[] = currentUser && currentUser.selected_subjects
-    ? currentUser.selected_subjects.replace(/^\{|\}$/g, '').split('","').map((s: string) => s.replace(/"/g, ''))
-    : [];
+  // 🚨 [에러 방어 패치 2] 렌더링 중에도 데이터가 배열일 때 터지지 않도록 보호
+  let rawSubjects: string[] = [];
+  if (currentUser?.selected_subjects) {
+    if (Array.isArray(currentUser.selected_subjects)) {
+      rawSubjects = currentUser.selected_subjects;
+    } else if (typeof currentUser.selected_subjects === 'string') {
+      rawSubjects = currentUser.selected_subjects
+        .replace(/^\{|\}$/g, '')
+        .split('","')
+        .map((s: string) => s.replace(/"/g, '').trim())
+        .filter((s: string) => s);
+    }
+  }
 
-  // 🚨 [에러 해결!] TypeScript가 불평하지 않게 string[] 타입을 정확히 명시했습니다.
   const mergedSubjects: string[] = Array.from(new Set(
     rawSubjects.map((subj: string) => subj.split('(')[0].trim())
   ));
@@ -272,7 +284,6 @@ export default function Home() {
         .animate-bounce { animation: bounce-s 1.5s ease-in-out infinite; }
       `}</style>
 
-      {/* Q&A 게시판 모달창 */}
       {isQnaModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
@@ -326,7 +337,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 공지사항 작성 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
@@ -387,7 +397,7 @@ export default function Home() {
             <div className={`text-6xl mb-1 mt-3 ${mStatus.anime}`}>{mStatus.emoji}</div>
             <h2 className="text-sm font-black">{mStatus.sName} (Lv.{mStatus.level})</h2>
             <div className="w-full max-w-[150px] bg-blue-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
-              <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${mStatus.progress}%` }}></div>
+              <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${mStatus?.progress || 0}%` }}></div>
             </div>
             <p className="text-[10px] font-bold text-blue-200">다음 진화까지: {mStatus.remXp} XP</p>
           </div>
@@ -399,7 +409,7 @@ export default function Home() {
                 <div className={`text-6xl mb-1 mt-3 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
                 <h2 className="text-sm font-black">{myStatus?.sName} (Lv.{myStatus?.level})</h2>
                 <div className="w-full max-w-[150px] bg-indigo-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
-                  <div className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${myStatus?.progress}%` }}></div>
+                  <div className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${myStatus?.progress || 0}%` }}></div>
                 </div>
                 <p className="text-[10px] font-bold text-indigo-200">다음 진화까지: {myStatus?.remXp} XP</p>
               </>
