@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "4기 대시보드",
+  title: "오름 OREUM",
   description: "공지사항 및 랭킹 시스템",
   manifest: "/manifest.json", // 👈 이 줄이 핵심입니다!
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "4기 대시보드",
+    title: "오름 OREUM",
   },
 };
 
