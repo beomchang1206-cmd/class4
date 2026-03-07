@@ -123,7 +123,8 @@ export default function Home() {
     fetchNotice();
 
     const savedName = localStorage.getItem("userName");
-    if (savedName) checkAndLoginUser(savedName);
+    // 🚨 1번째 수정: 로그인된 상태가 아닐 때만 자동 로그인하도록 조건 추가
+    if (savedName && !currentUser) checkAndLoginUser(savedName);
   }, [currentUser]);
 
   useEffect(() => {
@@ -207,7 +208,6 @@ export default function Home() {
 
       try {
         if (data.selected_subjects) {
-          // 🚨 [에러 방어 패치 1] 데이터가 문자열인지 배열인지 확인하고 처리
           let subjectsArray: string[] = [];
           if (Array.isArray(data.selected_subjects)) {
             subjectsArray = data.selected_subjects;
@@ -231,8 +231,9 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
+    // 🚨 2번째 수정: 삭제를 상태 변경보다 "먼저" 진행하여 무한루프 차단
     localStorage.removeItem("userName");
+    setCurrentUser(null);
     try {
       if ((OneSignal as any).logout) (OneSignal as any).logout();
     } catch (e) { console.log(e); }
@@ -255,7 +256,6 @@ export default function Home() {
   const mStatus = getStatus(rankings[0]?.total_xp, rankings[0]?.name || "개척자");
   const myStatus = currentUser ? getStatus(currentUser.total_xp, currentUser.name) : null;
 
-  // 🚨 [에러 방어 패치 2] 렌더링 중에도 데이터가 배열일 때 터지지 않도록 보호
   let rawSubjects: string[] = [];
   if (currentUser?.selected_subjects) {
     if (Array.isArray(currentUser.selected_subjects)) {
