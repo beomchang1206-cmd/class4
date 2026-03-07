@@ -64,18 +64,18 @@ export default function Home() {
   const [pendingNotices, setPendingNotices] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // 공지 모달 상태
+  // 공지사항 모달
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubject, setFormSubject] = useState("공통");
   const [formContent, setFormContent] = useState("");
   const [formDate, setFormDate] = useState("");
 
-  // 타이머 상태
+  // 타이머
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [studySeconds, setStudySeconds] = useState(0);
   const timerRef = useRef<any>(null);
 
-  // 🚨 [새로 추가] Q&A 라운지 모달 상태 변수
+  // Q&A 게시판 모달
   const [isQnaModalOpen, setIsQnaModalOpen] = useState(false);
   const [currentQnaSubject, setCurrentQnaSubject] = useState("");
   const [qnaPosts, setQnaPosts] = useState<any[]>([]);
@@ -190,13 +190,11 @@ export default function Home() {
     setPendingNotices(data || []);
   };
 
-  // 🚨 [새로 추가] 특정 과목의 Q&A 게시글 불러오기
   const fetchQnaPosts = async (subject: string) => {
     const { data } = await supabase.from("qna").select("*").eq("subject", subject).order("created_at", { ascending: false });
     setQnaPosts(data || []);
   };
 
-  // 🚨 [새로 추가] 게시판 버튼 눌렀을 때 모달 띄우기
   const openQnaLounge = (subject: string) => {
     setCurrentQnaSubject(subject);
     fetchQnaPosts(subject);
@@ -253,11 +251,13 @@ export default function Home() {
   const mStatus = getStatus(rankings[0]?.total_xp, rankings[0]?.name || "개척자");
   const myStatus = currentUser ? getStatus(currentUser.total_xp, currentUser.name) : null;
 
-  const rawSubjects = currentUser && currentUser.selected_subjects
+  // 공지사항 등 특정 분반 타겟팅을 위한 원본 과목 리스트
+  const rawSubjects: string[] = currentUser && currentUser.selected_subjects
     ? currentUser.selected_subjects.replace(/^\{|\}$/g, '').split('","').map((s: string) => s.replace(/"/g, ''))
     : [];
 
-  const mergedSubjects = Array.from(new Set(
+  // 🚨 [에러 해결!] TypeScript가 불평하지 않게 string[] 타입을 정확히 명시했습니다.
+  const mergedSubjects: string[] = Array.from(new Set(
     rawSubjects.map((subj: string) => subj.split('(')[0].trim())
   ));
 
@@ -272,7 +272,7 @@ export default function Home() {
         .animate-bounce { animation: bounce-s 1.5s ease-in-out infinite; }
       `}</style>
 
-      {/* 🚨 [새로 추가] Q&A 라운지 모달창 */}
+      {/* Q&A 게시판 모달창 */}
       {isQnaModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
@@ -281,7 +281,6 @@ export default function Home() {
               <button onClick={() => setIsQnaModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300">닫기</button>
             </div>
 
-            {/* 게시글 목록 */}
             <div className="flex-1 overflow-y-auto mb-4 pr-2 flex flex-col gap-3">
               {qnaPosts.length > 0 ? qnaPosts.map(post => (
                 <div key={post.id} className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
@@ -299,7 +298,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* 입력창 */}
             <div className="mt-auto border-t pt-4 flex gap-2">
               <textarea
                 className="flex-1 border-2 border-gray-100 rounded-xl p-3 resize-none focus:outline-none focus:border-indigo-300"
@@ -317,7 +315,7 @@ export default function Home() {
                     content: newQnaContent
                   }]);
                   setNewQnaContent("");
-                  fetchQnaPosts(currentQnaSubject); // 작성 후 목록 새로고침
+                  fetchQnaPosts(currentQnaSubject);
                 }}
                 className="bg-indigo-600 text-white font-black px-6 rounded-xl hover:bg-indigo-700 transition shadow-md"
               >
@@ -328,7 +326,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 수행평가 추가 모달 */}
+      {/* 공지사항 작성 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
@@ -352,7 +350,7 @@ export default function Home() {
 
       <header className="mb-8 flex justify-between items-end flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-black italic text-blue-600">11학년 🐲 오름</h1>
+          <h1 className="text-3xl font-black italic text-blue-600">오름 OREUM</h1>
           <p className="text-gray-500 font-bold">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -416,7 +414,7 @@ export default function Home() {
               {mergedSubjects.map((subj: string, i: number) => (
                 <button
                   key={i}
-                  onClick={() => openQnaLounge(subj)} // 🚨 드디어 찐 오픈! 모달창이 열립니다.
+                  onClick={() => openQnaLounge(subj)}
                   className="bg-indigo-50 text-indigo-700 px-4 py-3 rounded-2xl font-black shadow-sm hover:bg-indigo-100 hover:scale-105 transition active:scale-95"
                 >
                   {subj}
