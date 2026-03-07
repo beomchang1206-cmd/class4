@@ -360,7 +360,7 @@ export default function Home() {
 
       <header className="mb-8 flex justify-between items-end flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-black italic text-blue-600">오름 OREUM</h1>
+          <h1 className="text-3xl font-black italic text-blue-600">11학년 🐲 오름 OREUM</h1>
           <p className="text-gray-500 font-bold">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
         </div>
         <div className="flex items-center gap-2">
