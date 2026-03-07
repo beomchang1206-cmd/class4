@@ -63,14 +63,23 @@ export default function Home() {
   const [rankings, setRankings] = useState<any[]>([]);
   const [pendingNotices, setPendingNotices] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // 공지 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubject, setFormSubject] = useState("공통");
   const [formContent, setFormContent] = useState("");
   const [formDate, setFormDate] = useState("");
 
+  // 타이머 상태
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [studySeconds, setStudySeconds] = useState(0);
   const timerRef = useRef<any>(null);
+
+  // 🚨 [새로 추가] Q&A 라운지 모달 상태 변수
+  const [isQnaModalOpen, setIsQnaModalOpen] = useState(false);
+  const [currentQnaSubject, setCurrentQnaSubject] = useState("");
+  const [qnaPosts, setQnaPosts] = useState<any[]>([]);
+  const [newQnaContent, setNewQnaContent] = useState("");
 
   const sendGlobalNotification = async (title: string, message: string) => {
     try {
@@ -181,6 +190,19 @@ export default function Home() {
     setPendingNotices(data || []);
   };
 
+  // 🚨 [새로 추가] 특정 과목의 Q&A 게시글 불러오기
+  const fetchQnaPosts = async (subject: string) => {
+    const { data } = await supabase.from("qna").select("*").eq("subject", subject).order("created_at", { ascending: false });
+    setQnaPosts(data || []);
+  };
+
+  // 🚨 [새로 추가] 게시판 버튼 눌렀을 때 모달 띄우기
+  const openQnaLounge = (subject: string) => {
+    setCurrentQnaSubject(subject);
+    fetchQnaPosts(subject);
+    setIsQnaModalOpen(true);
+  };
+
   const checkAndLoginUser = async (name: string) => {
     const { data } = await supabase.from("users").select("*").eq("name", name.trim()).single();
 
@@ -192,15 +214,11 @@ export default function Home() {
         if (data.selected_subjects) {
           const cleanedString = data.selected_subjects.replace(/^\{|\}$/g, '');
           const subjectsArray = cleanedString.split('","').map((s: string) => s.replace(/"/g, ''));
-
           const tags: Record<string, string> = {};
           subjectsArray.forEach((subj: string) => { tags[subj] = "true"; });
 
-          if ((OneSignal as any).User) {
-            await (OneSignal as any).User.addTags(tags);
-          } else {
-            await (OneSignal as any).sendTags(tags);
-          }
+          if ((OneSignal as any).User) await (OneSignal as any).User.addTags(tags);
+          else await (OneSignal as any).sendTags(tags);
         }
       } catch (err) {
         console.error("이름표 부착 실패:", err);
@@ -210,19 +228,17 @@ export default function Home() {
     }
   };
 
-  // 🚨 [새로워진 경험치 & 레벨업 계산기]
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem("userName");
+    try {
+      if ((OneSignal as any).logout) (OneSignal as any).logout();
+    } catch (e) { console.log(e); }
+  };
+
   const getStatus = (totalXp: number, name: string) => {
-    let level = 1;
-    let curXp = totalXp || 0;
-    let reqXp = 100 + (Math.pow(level, 2) * 50); // 레벨이 오를수록 다음 레벨업 요구치가 뻥튀기 됩니다!
-
-    while (curXp >= reqXp) {
-      curXp -= reqXp;
-      level++;
-      reqXp = 100 + (Math.pow(level, 2) * 50);
-    }
-
-    // 남은 경험치와 퍼센테이지 계산
+    let level = 1; let curXp = totalXp || 0; let reqXp = 100 + (Math.pow(level, 2) * 50);
+    while (curXp >= reqXp) { curXp -= reqXp; level++; reqXp = 100 + (Math.pow(level, 2) * 50); }
     const progress = Math.min((curXp / reqXp) * 100, 100);
     const remXp = reqXp - curXp;
 
@@ -237,6 +253,14 @@ export default function Home() {
   const mStatus = getStatus(rankings[0]?.total_xp, rankings[0]?.name || "개척자");
   const myStatus = currentUser ? getStatus(currentUser.total_xp, currentUser.name) : null;
 
+  const rawSubjects = currentUser && currentUser.selected_subjects
+    ? currentUser.selected_subjects.replace(/^\{|\}$/g, '').split('","').map((s: string) => s.replace(/"/g, ''))
+    : [];
+
+  const mergedSubjects = Array.from(new Set(
+    rawSubjects.map((subj: string) => subj.split('(')[0].trim())
+  ));
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
       <style>{`
@@ -248,12 +272,69 @@ export default function Home() {
         .animate-bounce { animation: bounce-s 1.5s ease-in-out infinite; }
       `}</style>
 
+      {/* 🚨 [새로 추가] Q&A 라운지 모달창 */}
+      {isQnaModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-4 border-b pb-4">
+              <h2 className="text-2xl font-black text-indigo-600">💬 {currentQnaSubject} 라운지</h2>
+              <button onClick={() => setIsQnaModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300">닫기</button>
+            </div>
+
+            {/* 게시글 목록 */}
+            <div className="flex-1 overflow-y-auto mb-4 pr-2 flex flex-col gap-3">
+              {qnaPosts.length > 0 ? qnaPosts.map(post => (
+                <div key={post.id} className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-black text-indigo-700 text-sm">👤 {post.author_name}</span>
+                    <span className="text-[10px] text-gray-400 font-bold">{new Date(post.created_at).toLocaleString('ko-KR')}</span>
+                  </div>
+                  <p className="text-gray-800 text-sm whitespace-pre-wrap">{post.content}</p>
+                </div>
+              )) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <span className="text-4xl mb-2">📭</span>
+                  <p className="font-bold">아직 올라온 질문이 없습니다. 첫 글을 남겨보세요!</p>
+                </div>
+              )}
+            </div>
+
+            {/* 입력창 */}
+            <div className="mt-auto border-t pt-4 flex gap-2">
+              <textarea
+                className="flex-1 border-2 border-gray-100 rounded-xl p-3 resize-none focus:outline-none focus:border-indigo-300"
+                rows={2}
+                placeholder="궁금한 점이나 정보를 공유해 보세요!"
+                value={newQnaContent}
+                onChange={(e) => setNewQnaContent(e.target.value)}
+              />
+              <button
+                onClick={async () => {
+                  if (!newQnaContent.trim()) return alert("내용을 입력하세요!");
+                  await supabase.from("qna").insert([{
+                    subject: currentQnaSubject,
+                    author_name: currentUser.name,
+                    content: newQnaContent
+                  }]);
+                  setNewQnaContent("");
+                  fetchQnaPosts(currentQnaSubject); // 작성 후 목록 새로고침
+                }}
+                className="bg-indigo-600 text-white font-black px-6 rounded-xl hover:bg-indigo-700 transition shadow-md"
+              >
+                등록
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 수행평가 추가 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <h2 className="text-2xl font-black mb-4">📝 새 공지 작성</h2>
             <select className="w-full border rounded-lg p-2 mb-4 bg-white" value={formSubject} onChange={(e) => setFormSubject(e.target.value)}>
-              {SUBJECT_LIST.map(sub => <option key={sub} value={sub}>{sub}</option>)}
+              {rawSubjects.length > 0 ? rawSubjects.map((sub: string) => <option key={sub} value={sub}>{sub}</option>) : SUBJECT_LIST.map(sub => <option key={sub} value={sub}>{sub}</option>)}
             </select>
             <input type="date" className="w-full border rounded-lg p-2 mb-4 bg-white" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
             <textarea className="w-full border rounded-lg p-2 mb-6 bg-white" rows={3} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="준비물을 적어주세요" />
@@ -271,11 +352,15 @@ export default function Home() {
 
       <header className="mb-8 flex justify-between items-end flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-black italic text-blue-600">4기 🐲 DASHBOARD</h1>
+          <h1 className="text-3xl font-black italic text-blue-600">11학년 🐲 오름</h1>
           <p className="text-gray-500 font-bold">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
         </div>
         <div className="flex items-center gap-2">
-          {!currentUser && <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">로그인</button>}
+          {!currentUser ? (
+            <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 transition">로그인</button>
+          ) : (
+            <button onClick={handleLogout} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition">로그아웃</button>
+          )}
         </div>
       </header>
 
@@ -283,7 +368,7 @@ export default function Home() {
         <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[460px]">
           <div className="flex justify-between items-center mb-4 border-b pb-4">
             <h2 className="text-2xl font-black">🚨 수행평가 및 준비물</h2>
-            <button onClick={() => setIsModalOpen(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-red-600 transition">+ 추가</button>
+            {currentUser && <button onClick={() => setIsModalOpen(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-red-600 transition">+ 추가</button>}
           </div>
           <div className="flex flex-col gap-3 overflow-y-auto pr-2">
             {pendingNotices.length > 0 ? pendingNotices.map(n => (
@@ -299,28 +384,22 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-6">
-          {/* 1위 마스코트 위젯 (높이를 조절해서 진행바가 들어갈 자리를 만들었습니다) */}
           <div className="bg-blue-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full">
             <span className="absolute top-4 left-4 bg-yellow-400 text-blue-900 text-[10px] font-black px-2 py-0.5 rounded-full">1위 마스코트</span>
             <div className={`text-6xl mb-1 mt-3 ${mStatus.anime}`}>{mStatus.emoji}</div>
             <h2 className="text-sm font-black">{mStatus.sName} (Lv.{mStatus.level})</h2>
-
-            {/* 🚨 진행률 바 & 남은 XP (1위) */}
             <div className="w-full max-w-[150px] bg-blue-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
               <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${mStatus.progress}%` }}></div>
             </div>
             <p className="text-[10px] font-bold text-blue-200">다음 진화까지: {mStatus.remXp} XP</p>
           </div>
 
-          {/* 나의 마스코트 위젯 */}
           <div className="bg-indigo-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full">
             <span className="absolute top-4 left-4 bg-indigo-400 text-white text-[10px] font-black px-2 py-0.5 rounded-full">나의 마스코트</span>
             {currentUser ? (
               <>
                 <div className={`text-6xl mb-1 mt-3 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
                 <h2 className="text-sm font-black">{myStatus?.sName} (Lv.{myStatus?.level})</h2>
-
-                {/* 🚨 진행률 바 & 남은 XP (내꺼) */}
                 <div className="w-full max-w-[150px] bg-indigo-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
                   <div className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${myStatus?.progress}%` }}></div>
                 </div>
@@ -328,6 +407,27 @@ export default function Home() {
               </>
             ) : <p className="text-white/50 text-sm">로그인 시 공개됩니다.</p>}
           </div>
+        </div>
+
+        <div className="md:col-span-3 bg-white rounded-3xl p-6 shadow-md border flex flex-col">
+          <h2 className="text-2xl font-black mb-4">💬 내 과목 Q&A 라운지</h2>
+          {currentUser ? (
+            <div className="flex gap-2 flex-wrap">
+              {mergedSubjects.map((subj: string, i: number) => (
+                <button
+                  key={i}
+                  onClick={() => openQnaLounge(subj)} // 🚨 드디어 찐 오픈! 모달창이 열립니다.
+                  className="bg-indigo-50 text-indigo-700 px-4 py-3 rounded-2xl font-black shadow-sm hover:bg-indigo-100 hover:scale-105 transition active:scale-95"
+                >
+                  {subj}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-100 rounded-2xl p-6 text-center">
+              <p className="text-gray-400 font-bold">로그인하면 본인이 수강하는 과목의 비밀 라운지 문이 열립니다 🚪✨</p>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-3xl p-6 shadow-md border flex flex-col h-[280px]">
@@ -357,21 +457,25 @@ export default function Home() {
 
         <div className="bg-gradient-to-r from-orange-400 to-rose-400 rounded-3xl p-6 shadow-md text-white flex flex-col justify-center text-center h-[280px]">
           <h2 className="text-xl font-black mb-2 italic text-yellow-200">⏰ EARLY BIRD</h2>
-          <p className="text-xs font-medium opacity-90 mb-4 text-white">7:30 전 등교하고 100XP 받기!</p>
+          <p className="text-xs font-medium opacity-90 mb-4 text-white">아침 06:30 ~ 07:30 등교 시 100XP!</p>
           <button onClick={async () => {
-            if (!currentUser) return;
+            if (!currentUser) return alert("로그인이 필요합니다!");
 
             const vnTime = new Date((new Date()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
             const hours = vnTime.getHours();
             const minutes = vnTime.getMinutes();
 
-            if (hours > 7 || (hours === 7 && minutes > 30)) {
-              return alert("⏰ 아쉽지만 얼리버드 마감 시간(07:30)이 지났습니다. 내일 다시 도전해 보세요!");
+            const currentMins = hours * 60 + minutes;
+            const startMins = 6 * 60 + 30; // 390분 (06:30)
+            const endMins = 7 * 60 + 30;   // 450분 (07:30)
+
+            if (currentMins < startMins || currentMins > endMins) {
+              return alert("⏰ 얼리버드 체크인은 아침 06:30 부터 07:30 까지만 가능합니다!\n(부지런한 새가 벌레를 잡는다죠? 내일 다시 도전하세요!)");
             }
 
             const todayKey = `early_${vnTime.getFullYear()}-${vnTime.getMonth() + 1}-${vnTime.getDate()}`;
             const { data: existing } = await supabase.from("contributions").select("*").eq("user_id", currentUser.id).eq("action_type", todayKey).single();
-            if (existing) return alert("이미 완료하셨습니다!");
+            if (existing) return alert("이미 오늘 얼리버드 보상을 받으셨습니다!");
 
             await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: todayKey, points: 100 }]);
             await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
