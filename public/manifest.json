@@ -1,7 +1,7 @@
 {
-    "name": "4기 대시보드",
-    "short_name": "4기",
-    "description": "4기 학생들을 위한 준비물 및 랭킹 대시보드",
+    "name": "오름 OREUM",
+    "short_name": "오름 OREUM",
+    "description": "스터디 & QnA 대시보드",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
