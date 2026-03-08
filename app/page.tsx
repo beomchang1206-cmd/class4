@@ -90,6 +90,43 @@ export default function Home() {
     }
   };
 
+  // 🚨 [추가된 기능] 날짜를 계산해서 D-7, D-1 오후 4시 예약 알림을 보내는 함수
+  const scheduleNoticeNotification = async (subject: string, dateStr: string, content: string) => {
+    const targetTime = new Date(`${dateStr}T16:00:00+07:00`); // 베트남 시간 기준 지정일 오후 4시
+    const now = new Date();
+
+    const oneDayBefore = new Date(targetTime.getTime() - 1 * 24 * 60 * 60 * 1000);
+    const sevenDaysBefore = new Date(targetTime.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // D-7일 알림 예약 (현재 시간보다 미래일 때만 실행)
+    if (sevenDaysBefore > now) {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `⏳ [D-7] ${subject} 공지 리마인드`,
+          message: content,
+          subject: subject,
+          send_after: sevenDaysBefore.toUTCString()
+        })
+      });
+    }
+
+    // D-1일 알림 예약 (현재 시간보다 미래일 때만 실행)
+    if (oneDayBefore > now) {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `🚨 [D-1] 내일 ${subject} 잊지마세요!`,
+          message: content,
+          subject: subject,
+          send_after: oneDayBefore.toUTCString()
+        })
+      });
+    }
+  };
+
   useEffect(() => {
     const initOneSignal = async () => {
       try {
@@ -123,7 +160,6 @@ export default function Home() {
     fetchNotice();
 
     const savedName = localStorage.getItem("userName");
-    // 🚨 1번째 수정: 로그인된 상태가 아닐 때만 자동 로그인하도록 조건 추가
     if (savedName && !currentUser) checkAndLoginUser(savedName);
   }, [currentUser]);
 
@@ -231,7 +267,6 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    // 🚨 2번째 수정: 삭제를 상태 변경보다 "먼저" 진행하여 무한루프 차단
     localStorage.removeItem("userName");
     setCurrentUser(null);
     try {
@@ -350,8 +385,15 @@ export default function Home() {
               <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-200 rounded-lg">취소</button>
               <button onClick={async () => {
                 if (!formContent || !formDate) return alert("내용을 입력하세요!");
+
+                // 1. 공지를 데이터베이스에 저장
                 await supabase.from("notices").insert([{ subject: formSubject, content: formContent, target_date: formDate }]);
+
+                // 2. 🚨 [추가된 기능] D-7, D-1 알림 예약 보내기
+                scheduleNoticeNotification(formSubject, formDate, formContent);
+
                 setIsModalOpen(false); setFormContent(""); fetchNotice();
+                alert("공지가 등록되었고, D-7 / D-1 자동 알림이 예약되었습니다! ⏰");
               }} className="px-4 py-2 bg-blue-500 text-white rounded-lg">등록</button>
             </div>
           </div>
