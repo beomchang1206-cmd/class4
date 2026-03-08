@@ -78,12 +78,13 @@ export default function Home() {
   const [qnaPosts, setQnaPosts] = useState<any[]>([]);
   const [newQnaContent, setNewQnaContent] = useState("");
 
-  const sendGlobalNotification = async (title: string, message: string) => {
+  // 🚨 [수정 1] 과목 정보(subject)를 받아서 특정 분반에만 알림을 보낼 수 있도록 업그레이드
+  const sendGlobalNotification = async (title: string, message: string, subject: string = "공통") => {
     try {
       await fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, message })
+        body: JSON.stringify({ title, message, subject })
       });
     } catch (err) {
       console.error("전체 알림 발송 실패:", err);
@@ -160,6 +161,7 @@ export default function Home() {
     fetchNotice();
 
     const savedName = localStorage.getItem("userName");
+    // 🚨 1번째 수정: 로그인된 상태가 아닐 때만 자동 로그인하도록 조건 추가
     if (savedName && !currentUser) checkAndLoginUser(savedName);
   }, [currentUser]);
 
@@ -267,6 +269,7 @@ export default function Home() {
   };
 
   const handleLogout = () => {
+    // 🚨 2번째 수정: 삭제를 상태 변경보다 "먼저" 진행하여 무한루프 차단
     localStorage.removeItem("userName");
     setCurrentUser(null);
     try {
@@ -360,6 +363,14 @@ export default function Home() {
                     author_name: currentUser.name,
                     content: newQnaContent
                   }]);
+
+                  // 🚨 [추가 2] 라운지에 새 글이 올라오면 해당 과목 친구들에게 즉시 알림 발송!
+                  sendGlobalNotification(
+                    `💬 [${currentQnaSubject}] 라운지 새 글`,
+                    `${currentUser.name}: ${newQnaContent}`,
+                    currentQnaSubject
+                  );
+
                   setNewQnaContent("");
                   fetchQnaPosts(currentQnaSubject);
                 }}
@@ -389,11 +400,18 @@ export default function Home() {
                 // 1. 공지를 데이터베이스에 저장
                 await supabase.from("notices").insert([{ subject: formSubject, content: formContent, target_date: formDate }]);
 
-                // 2. 🚨 [추가된 기능] D-7, D-1 알림 예약 보내기
+                // 2. [추가된 기능] D-7, D-1 알림 예약 보내기
                 scheduleNoticeNotification(formSubject, formDate, formContent);
 
+                // 🚨 [추가 3] 새 공지가 등록되면 해당 과목 친구들에게 즉시 알림 발송!
+                sendGlobalNotification(
+                  `🚨 [${formSubject}] 새 공지 등록!`,
+                  formContent,
+                  formSubject
+                );
+
                 setIsModalOpen(false); setFormContent(""); fetchNotice();
-                alert("공지가 등록되었고, D-7 / D-1 자동 알림이 예약되었습니다! ⏰");
+                alert("공지가 등록되었고, 즉시 알림 및 D-7 / D-1 자동 알림이 세팅되었습니다! ⏰");
               }} className="px-4 py-2 bg-blue-500 text-white rounded-lg">등록</button>
             </div>
           </div>
