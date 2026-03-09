@@ -195,55 +195,56 @@ export default function Home() {
   const mergedSubjects: string[] = Array.from(new Set(rawSubjects.map((subj: string) => subj.split('(')[0].trim())));
 
   return (
-    // 🌑 프리미엄 다크 배경 (아주 짙은 아연색)
-    <div className="min-h-screen bg-[#09090b] font-sans text-zinc-100 selection:bg-blue-500/30 selection:text-white">
+    // 🌑 눈이 편안한 깊은 슬레이트 다크 배경 적용
+    <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/40 selection:text-white">
       <style>{`
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-float-slow { animation: float 4s ease-in-out infinite; }
         
-        /* 스크롤바 숨기기 */
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 스크롤바 커스텀: 투박함을 없애고 얇고 세련되게 변경 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
       `}</style>
 
-      {/* 📦 메인 래퍼: Max-width 고정으로 깔끔한 레이아웃 */}
-      <div className="max-w-6xl mx-auto p-4 md:p-8">
+      <div className="max-w-6xl mx-auto p-5 md:p-10">
 
         {/* 💬 QnA 모달 */}
         {isQnaModalOpen && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
-            <div className="bg-[#18181b] border border-white/10 rounded-3xl p-8 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
-              <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
+              <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-5">
+                <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
                   {currentQnaSubject} 라운지
                 </h2>
-                <button onClick={() => setIsQnaModalOpen(false)} className="text-zinc-400 hover:text-white text-sm font-semibold transition-colors px-3 py-1.5 rounded-xl hover:bg-white/5">ESC</button>
+                <button onClick={() => setIsQnaModalOpen(false)} className="text-slate-400 hover:text-slate-100 text-sm font-semibold transition-colors px-4 py-2 rounded-xl hover:bg-slate-800">닫기</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto mb-4 pr-2 flex flex-col gap-4 hide-scrollbar">
+              <div className="flex-1 overflow-y-auto mb-5 pr-3 flex flex-col gap-4">
                 {qnaPosts.length > 0 ? qnaPosts.map(post => (
-                  <div key={post.id} className="bg-[#27272a]/50 p-5 rounded-2xl border border-white/5">
+                  <div key={post.id} className="bg-slate-800/40 p-5 rounded-2xl border border-slate-800/50">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="font-semibold text-blue-400 text-sm">{post.author_name}</span>
-                      <span className="text-xs text-zinc-500 font-mono tracking-tighter">{new Date(post.created_at).toLocaleString('ko-KR')}</span>
+                      <span className="font-bold text-blue-400 text-[15px]">{post.author_name}</span>
+                      <span className="text-xs text-slate-500 font-mono">{new Date(post.created_at).toLocaleString('ko-KR')}</span>
                     </div>
-                    <p className="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                    <p className="text-slate-300 text-[15px] whitespace-pre-wrap leading-relaxed">{post.content}</p>
                   </div>
                 )) : (
-                  <div className="flex flex-col items-center justify-center h-full text-zinc-600">
-                    <span className="text-3xl mb-3 opacity-30">📂</span>
-                    <p className="font-medium text-sm">라운지가 비어있습니다. 첫 글을 작성해보세요.</p>
+                  <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                    <span className="text-4xl mb-4 opacity-50">📂</span>
+                    <p className="font-medium text-base">라운지가 비어있습니다. 첫 질문을 남겨보세요.</p>
                   </div>
                 )}
               </div>
 
-              <div className="mt-auto border-t border-white/5 pt-6 flex gap-3">
+              <div className="mt-auto border-t border-slate-800 pt-6 flex gap-3">
                 <textarea
-                  className="flex-1 bg-[#09090b] border border-white/10 rounded-xl p-4 resize-none focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all text-sm text-zinc-200 placeholder-zinc-600"
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-4 resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-[15px] text-slate-200 placeholder-slate-600 leading-relaxed"
                   rows={2}
-                  placeholder="질문이나 유용한 정보를 공유해주세요."
+                  placeholder="질문이나 정보를 공유해주세요."
                   value={newQnaContent}
                   onChange={(e) => setNewQnaContent(e.target.value)}
                 />
@@ -254,9 +255,9 @@ export default function Home() {
                     sendGlobalNotification(`💬 [${currentQnaSubject}] 라운지 새 글`, `${currentUser.name}: ${newQnaContent}`, currentQnaSubject);
                     setNewQnaContent(""); fetchQnaPosts(currentQnaSubject);
                   }}
-                  className="bg-white text-black font-semibold px-7 rounded-xl hover:bg-zinc-200 hover:scale-[0.98] transition-all text-sm"
+                  className="bg-blue-600 text-white font-semibold px-8 rounded-xl hover:bg-blue-500 transition-colors text-[15px]"
                 >
-                  Send
+                  등록
                 </button>
               </div>
             </div>
@@ -265,108 +266,107 @@ export default function Home() {
 
         {/* 📝 공지 작성 모달 */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-[#18181b] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl">
-              <h2 className="text-xl font-bold tracking-tight mb-6 text-white">New Notice</h2>
-              <select className="w-full bg-[#09090b] border border-white/10 rounded-xl p-4 mb-4 focus:outline-none focus:border-blue-500/50 text-sm text-zinc-200 transition-colors" value={formSubject} onChange={(e) => setFormSubject(e.target.value)}>
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+              <h2 className="text-2xl font-bold mb-6 text-slate-100">새 공지 등록</h2>
+
+              <label className="block text-sm font-medium text-slate-400 mb-2">과목 선택</label>
+              <select className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 mb-5 focus:outline-none focus:border-blue-500 text-base text-slate-200" value={formSubject} onChange={(e) => setFormSubject(e.target.value)}>
                 {rawSubjects.length > 0 ? rawSubjects.map((sub: string) => <option key={sub} value={sub}>{sub}</option>) : SUBJECT_LIST.map(sub => <option key={sub} value={sub}>{sub}</option>)}
               </select>
-              <input type="date" className="w-full bg-[#09090b] border border-white/10 rounded-xl p-4 mb-4 focus:outline-none focus:border-blue-500/50 text-sm text-zinc-200 transition-colors cursor-text" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
-              <textarea className="w-full bg-[#09090b] border border-white/10 rounded-xl p-4 mb-6 focus:outline-none focus:border-blue-500/50 resize-none text-sm text-zinc-200 placeholder-zinc-600 transition-colors" rows={4} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="수행평가 및 준비물 내용" />
+
+              <label className="block text-sm font-medium text-slate-400 mb-2">마감/일정 날짜</label>
+              <input type="date" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 mb-5 focus:outline-none focus:border-blue-500 text-base text-slate-200" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
+
+              <label className="block text-sm font-medium text-slate-400 mb-2">상세 내용</label>
+              <textarea className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 mb-8 focus:outline-none focus:border-blue-500 resize-none text-base text-slate-200 placeholder-slate-600 leading-relaxed" rows={4} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="수행평가 내용 및 준비물을 입력하세요" />
+
               <div className="flex justify-end gap-3">
-                <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-transparent border border-white/10 text-zinc-400 text-sm font-semibold rounded-xl hover:bg-white/5 hover:text-white transition-all">Cancel</button>
+                <button onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-transparent border border-slate-700 text-slate-300 text-[15px] font-semibold rounded-xl hover:bg-slate-800 transition-colors">취소</button>
                 <button onClick={async () => {
                   if (!formContent || !formDate) return alert("내용을 입력하세요.");
                   await supabase.from("notices").insert([{ subject: formSubject, content: formContent, target_date: formDate }]);
                   scheduleNoticeNotification(formSubject, formDate, formContent);
                   sendGlobalNotification(`🚨 [${formSubject}] 새 공지 등록`, formContent, formSubject);
                   setIsModalOpen(false); setFormContent(""); fetchNotice();
-                  alert("공지 등록 및 예약 알림 세팅 완료.");
-                }} className="px-6 py-2.5 bg-white text-black text-sm font-semibold rounded-xl hover:bg-zinc-200 hover:scale-[0.98] transition-all">Deploy</button>
+                  alert("공지 등록 및 예약 알림(D-7, D-1) 세팅이 완료되었습니다.");
+                }} className="px-8 py-3 bg-blue-600 text-white text-[15px] font-semibold rounded-xl hover:bg-blue-500 transition-colors">등록 완료</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* 🎨 [헤더] 최고급 SaaS 스타일 */}
-        <header className="mb-10 flex justify-between items-end flex-wrap gap-4 pb-6 border-b border-white/5">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black font-black text-xl shadow-[0_0_15px_rgba(255,255,255,0.2)]">O</div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">
-                OREUM <span className="text-zinc-600 font-medium ml-1 text-lg">Workspace</span>
-              </h1>
-              <p className="text-zinc-500 text-sm mt-1 font-medium">{currentUser ? `Logged in as ${currentUser.name}` : "Please sign in to access the dashboard."}</p>
-            </div>
+        {/* 🎨 [헤더] 넉넉한 여백과 명확한 텍스트 대비 */}
+        <header className="mb-12 flex justify-between items-end flex-wrap gap-4 pb-6 border-b border-slate-800">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white">
+              오름 <span className="text-blue-500">OREUM</span>
+            </h1>
+            <p className="text-slate-400 text-base mt-2 font-medium">{currentUser ? `${currentUser.name}님, 오늘도 힘내세요.` : "대시보드 이용을 위해 로그인해주세요."}</p>
           </div>
           <div className="flex items-center gap-3">
             {!currentUser ? (
-              <button onClick={() => { const n = window.prompt("Enter your name:"); if (n) checkAndLoginUser(n); }} className="bg-white text-black px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-zinc-200 hover:scale-[0.98] transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)]">Sign In</button>
+              <button onClick={() => { const n = window.prompt("이름을 입력하세요:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-7 py-3 rounded-xl text-[15px] font-bold hover:bg-blue-500 transition-colors">로그인</button>
             ) : (
-              <button onClick={handleLogout} className="bg-transparent border border-white/10 text-zinc-400 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-white/5 hover:text-white transition-all">Sign Out</button>
+              <button onClick={handleLogout} className="bg-slate-800 border border-slate-700 text-slate-300 px-6 py-3 rounded-xl text-[15px] font-semibold hover:bg-slate-700 hover:text-white transition-colors">로그아웃</button>
             )}
           </div>
         </header>
 
-        {/* 🧩 벤토 그리드 시작 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* 📝 공지사항 섹션 (가장 넓은 영역 차지) */}
-          <div className="lg:col-span-2 bg-[#18181b] rounded-3xl p-8 border border-white/5 flex flex-col h-[480px]">
-            <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
-              <h2 className="text-lg font-semibold tracking-tight text-white flex items-center gap-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse"></div>
-                Assignments & Items
+          {/* 📝 공지사항 섹션 */}
+          <div className="lg:col-span-2 bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col h-[500px]">
+            <div className="flex justify-between items-center mb-8 pb-5 border-b border-slate-800/60">
+              <h2 className="text-xl font-bold text-slate-100 flex items-center gap-3">
+                <span className="w-3 h-3 rounded-full bg-rose-500"></span> 수행평가 및 준비물
               </h2>
-              {currentUser && <button onClick={() => setIsModalOpen(true)} className="bg-transparent border border-white/10 text-zinc-300 px-4 py-1.5 rounded-lg font-semibold text-xs hover:bg-white/5 hover:text-white transition-all">Add New</button>}
+              {currentUser && <button onClick={() => setIsModalOpen(true)} className="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-slate-700 transition-colors">+ 새 공지</button>}
             </div>
-            <div className="flex flex-col gap-3 overflow-y-auto pr-2 hide-scrollbar">
+            <div className="flex flex-col gap-4 overflow-y-auto pr-3">
               {pendingNotices.length > 0 ? pendingNotices.map(n => (
-                <div key={n.id} className="bg-[#09090b] p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
-                  <div className="flex gap-3 mb-2.5 items-center">
-                    <span className="text-[11px] font-bold text-red-400 bg-red-400/10 border border-red-400/20 px-2.5 py-1 rounded-md">{n.subject}</span>
-                    <span className="text-[12px] font-mono text-zinc-500 group-hover:text-zinc-400 transition-colors">{n.target_date}</span>
+                <div key={n.id} className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-600 transition-colors">
+                  <div className="flex gap-3 mb-3 items-center">
+                    <span className="text-xs font-bold text-blue-300 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-lg">{n.subject}</span>
+                    <span className="text-sm font-medium text-slate-400">{n.target_date}</span>
                   </div>
-                  <p className="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">{n.content}</p>
+                  <p className="text-slate-300 text-base whitespace-pre-wrap leading-relaxed">{n.content}</p>
                 </div>
-              )) : <div className="flex flex-col items-center justify-center h-full"><p className="text-zinc-600 text-sm font-medium">No pending assignments.</p></div>}
+              )) : <div className="flex flex-col items-center justify-center h-full"><p className="text-slate-500 text-base font-medium">등록된 일정이 없습니다.</p></div>}
             </div>
           </div>
 
-          {/* 🎮 마스코트/랭킹 섹션 (우측 위쪽 영역) */}
-          <div className="flex flex-col gap-6">
-
-            {/* Top Mascot */}
-            <div className="bg-gradient-to-b from-[#18181b] to-[#09090b] rounded-3xl p-6 border border-amber-500/20 flex flex-col items-center justify-center text-center relative h-[228px] w-full group">
-              <span className="absolute top-5 left-5 bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-amber-500/20">Rank 1</span>
-              <div className={`text-5xl mb-3 mt-4 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)] ${mStatus.anime}`}>{mStatus.emoji}</div>
-              <h2 className="text-sm font-bold tracking-tight text-white mb-1">{mStatus.sName} <span className="text-amber-500 ml-1">Lv.{mStatus.level}</span></h2>
-              <div className="w-full max-w-[140px] bg-black rounded-full h-1.5 mt-2 mb-2 overflow-hidden border border-white/5">
-                <div className="bg-gradient-to-r from-amber-600 to-yellow-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${mStatus?.progress || 0}%` }}></div>
+          {/* 🎮 마스코트 섹션 */}
+          <div className="flex flex-col gap-8">
+            <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col items-center justify-center text-center relative h-[234px] w-full">
+              <span className="absolute top-5 left-5 bg-amber-500/10 text-amber-400 text-xs font-bold px-3 py-1 rounded-lg border border-amber-500/20">1위 랭커</span>
+              <div className={`text-6xl mb-4 mt-5 ${mStatus.anime}`}>{mStatus.emoji}</div>
+              <h2 className="text-base font-bold text-slate-100 mb-2">{mStatus.sName} <span className="text-amber-400 ml-1">Lv.{mStatus.level}</span></h2>
+              <div className="w-full max-w-[150px] bg-slate-950 rounded-full h-2 mt-2 mb-2 overflow-hidden border border-slate-800">
+                <div className="bg-amber-500 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${mStatus?.progress || 0}%` }}></div>
               </div>
-              <p className="text-[10px] font-medium text-zinc-500">{mStatus.remXp} XP to next level</p>
+              <p className="text-xs font-medium text-slate-500">다음 레벨까지 {mStatus.remXp} XP</p>
             </div>
 
-            {/* My Mascot */}
-            <div className="bg-[#18181b] rounded-3xl p-6 border border-white/5 flex flex-col items-center justify-center text-center relative h-[228px] w-full">
-              <span className="absolute top-5 left-5 bg-blue-500/10 text-blue-400 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-blue-500/20">My Mascot</span>
+            <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col items-center justify-center text-center relative h-[234px] w-full">
+              <span className="absolute top-5 left-5 bg-blue-500/10 text-blue-400 text-xs font-bold px-3 py-1 rounded-lg border border-blue-500/20">나의 상태</span>
               {currentUser ? (
                 <>
-                  <div className={`text-5xl mb-3 mt-4 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
-                  <h2 className="text-sm font-bold tracking-tight text-white mb-1">{myStatus?.sName} <span className="text-blue-400 ml-1">Lv.{myStatus?.level}</span></h2>
-                  <div className="w-full max-w-[140px] bg-black rounded-full h-1.5 mt-2 mb-2 overflow-hidden border border-white/5">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${myStatus?.progress || 0}%` }}></div>
+                  <div className={`text-6xl mb-4 mt-5 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
+                  <h2 className="text-base font-bold text-slate-100 mb-2">{myStatus?.sName} <span className="text-blue-400 ml-1">Lv.{myStatus?.level}</span></h2>
+                  <div className="w-full max-w-[150px] bg-slate-950 rounded-full h-2 mt-2 mb-2 overflow-hidden border border-slate-800">
+                    <div className="bg-blue-500 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${myStatus?.progress || 0}%` }}></div>
                   </div>
-                  <p className="text-[10px] font-medium text-zinc-500">{myStatus?.remXp} XP to next level</p>
+                  <p className="text-xs font-medium text-slate-500">다음 레벨까지 {myStatus?.remXp} XP</p>
                 </>
-              ) : <p className="text-zinc-600 text-xs font-medium">Authentication required.</p>}
+              ) : <p className="text-slate-500 text-sm font-medium">로그인이 필요합니다.</p>}
             </div>
           </div>
 
-          {/* 💬 라운지 과목 버튼 (가로로 넓게) */}
-          <div className="lg:col-span-3 bg-[#18181b] rounded-3xl p-8 border border-white/5 flex flex-col">
-            <h2 className="text-lg font-semibold tracking-tight text-white mb-5 flex items-center gap-2">
-              Subject Lounges
+          {/* 💬 라운지 과목 버튼 */}
+          <div className="lg:col-span-3 bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col">
+            <h2 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-3">
+              💬 과목별 Q&A 라운지
             </h2>
             {currentUser ? (
               <div className="flex gap-3 flex-wrap">
@@ -374,63 +374,60 @@ export default function Home() {
                   <button
                     key={i}
                     onClick={() => openQnaLounge(subj)}
-                    className="bg-[#09090b] border border-white/10 text-zinc-300 px-5 py-3 rounded-xl text-sm font-medium hover:border-blue-500/50 hover:text-white transition-colors"
+                    className="bg-slate-800 border border-slate-700 text-slate-200 px-6 py-3.5 rounded-xl text-[15px] font-semibold hover:border-blue-500 hover:bg-slate-800/80 transition-colors"
                   >
                     {subj}
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="bg-[#09090b] rounded-xl p-6 text-center border border-dashed border-white/10">
-                <p className="text-zinc-500 text-sm font-medium">Please sign in to view your enrolled subjects.</p>
+              <div className="bg-slate-950 rounded-2xl p-8 text-center border border-dashed border-slate-800">
+                <p className="text-slate-500 text-[15px] font-medium">로그인하시면 본인이 수강하는 과목의 라운지에 입장할 수 있습니다.</p>
               </div>
             )}
           </div>
 
           {/* 🏆 랭킹 섹션 */}
-          <div className="bg-[#18181b] rounded-3xl p-8 border border-white/5 flex flex-col h-[300px]">
-            <h2 className="text-lg font-semibold tracking-tight text-white mb-5">Leaderboard</h2>
-            <div className="flex flex-col gap-2 overflow-y-auto pr-2 hide-scrollbar">
+          <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col h-[320px]">
+            <h2 className="text-xl font-bold text-slate-100 mb-6">🏆 명예의 전당</h2>
+            <div className="flex flex-col gap-3 overflow-y-auto pr-2">
               {rankings.map((u, i) => (
-                <div key={i} className="flex justify-between items-center text-sm py-2.5 px-4 bg-[#09090b] rounded-xl border border-white/5">
-                  <span className="font-medium text-zinc-200">
-                    <span className={`inline-block w-6 text-left font-mono ${i < 3 ? 'text-amber-500 font-bold' : 'text-zinc-600'}`}>{i + 1}</span>
+                <div key={i} className="flex justify-between items-center text-[15px] py-3 px-5 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                  <span className="font-semibold text-slate-200">
+                    <span className={`inline-block w-6 text-left ${i < 3 ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>{i + 1}</span>
                     {u.name}
                   </span>
-                  <span className="text-white font-mono bg-white/5 px-2 py-1 rounded text-xs">{u.total_xp || 0} XP</span>
+                  <span className="text-blue-300 font-bold bg-blue-500/10 px-3 py-1 rounded-lg text-sm">{u.total_xp || 0} XP</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ⏱️ 스터디 타이머 (강렬한 포인트 컬러) */}
-          <div className={`rounded-3xl p-8 border flex flex-col items-center justify-center text-center transition-colors h-[300px] relative overflow-hidden ${isTimerActive ? 'bg-[#18181b] border-emerald-500/30' : 'bg-[#18181b] border-white/5'}`}>
-            {isTimerActive && <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 animate-pulse"></div>}
-
-            <h2 className="text-xs font-bold text-zinc-500 tracking-widest mb-3 uppercase">Focus Mode</h2>
-            <div className={`text-7xl font-mono font-bold tracking-tighter mb-8 ${isTimerActive ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'text-white'}`}>
-              {Math.floor(studySeconds / 60)}<span className="text-zinc-700 mx-1">:</span>{String(studySeconds % 60).padStart(2, '0')}
+          {/* ⏱️ 스터디 타이머 */}
+          <div className={`rounded-3xl p-8 border flex flex-col items-center justify-center text-center transition-colors h-[320px] relative ${isTimerActive ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-slate-900 border-slate-800'}`}>
+            <h2 className="text-sm font-bold text-slate-500 tracking-widest mb-4 uppercase">Study Focus Timer</h2>
+            <div className={`text-7xl font-mono font-bold tracking-tighter mb-8 ${isTimerActive ? 'text-emerald-400' : 'text-slate-300'}`}>
+              {Math.floor(studySeconds / 60)}<span className="text-slate-600 mx-2">:</span>{String(studySeconds % 60).padStart(2, '0')}
             </div>
 
             {isTimerActive ? (
-              <button onClick={stopTimer} className="bg-zinc-800 text-white px-8 py-3 rounded-xl text-sm font-semibold hover:bg-zinc-700 hover:text-red-400 transition-all border border-white/5 w-full max-w-[220px]">Stop & Save</button>
+              <button onClick={stopTimer} className="bg-slate-800 text-slate-200 px-8 py-3.5 rounded-xl text-[15px] font-bold hover:bg-rose-500/20 hover:text-rose-400 border border-slate-700 hover:border-rose-500/50 transition-all w-full max-w-[240px]">기록 종료 및 저장</button>
             ) : (
-              <button onClick={startTimer} className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-8 py-3 rounded-xl text-sm font-semibold hover:bg-emerald-500 hover:text-black transition-all w-full max-w-[220px]">Start Focus</button>
+              <button onClick={startTimer} className="bg-emerald-600 text-white px-8 py-3.5 rounded-xl text-[15px] font-bold hover:bg-emerald-500 transition-colors w-full max-w-[240px]">공부 시작</button>
             )}
-            <p className="text-[11px] text-zinc-600 font-medium mt-5">* Auto-cancels if tab is switched.</p>
+            <p className="text-xs text-slate-500 font-medium mt-6">* 다른 탭으로 이동 시 타이머가 취소됩니다.</p>
           </div>
 
-          {/* 🌅 얼리버드 (그라데이션 포인트) */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-800 rounded-3xl p-8 border border-white/10 text-white flex flex-col justify-center items-center text-center h-[300px] shadow-[0_0_30px_rgba(79,70,229,0.15)] relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-            <h2 className="text-2xl font-bold tracking-tight mb-2">Early Bird</h2>
-            <p className="text-xs font-medium text-indigo-200 mb-8 leading-relaxed">Check in between<br />06:30 - 07:30 to earn 100 XP</p>
+          {/* 🌅 얼리버드 */}
+          <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col justify-center items-center text-center h-[320px]">
+            <h2 className="text-2xl font-extrabold text-slate-100 mb-3">🌅 Early Bird</h2>
+            <p className="text-sm font-medium text-slate-400 mb-8 leading-relaxed">아침 06:30 ~ 07:30 접속 시<br />보너스 100 XP 지급</p>
             <button onClick={async () => {
               if (!currentUser) return alert("로그인이 필요합니다.");
               const vnTime = new Date((new Date()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
               const hours = vnTime.getHours(); const minutes = vnTime.getMinutes();
               const currentMins = hours * 60 + minutes;
-              if (currentMins < 390 || currentMins > 450) return alert("현재는 얼리버드 체크인 시간이 아닙니다. (06:30 - 07:30)");
+              if (currentMins < 390 || currentMins > 450) return alert("현재는 얼리버드 시간이 아닙니다. (06:30 ~ 07:30)");
               const todayKey = `early_${vnTime.getFullYear()}-${vnTime.getMonth() + 1}-${vnTime.getDate()}`;
               const { data: existing } = await supabase.from("contributions").select("*").eq("user_id", currentUser.id).eq("action_type", todayKey).single();
               if (existing) return alert("이미 오늘 얼리버드 보상을 받으셨습니다.");
@@ -439,8 +436,8 @@ export default function Home() {
               alert("체크인 완료! 100XP가 지급되었습니다.");
               sendGlobalNotification("🌅 얼리버드 체크인", `${currentUser.name}님이 기상 미션을 완료했습니다.`);
               checkAndLoginUser(currentUser.name); fetchRankings();
-            }} className="bg-white text-black w-full max-w-[220px] font-bold text-sm py-3 rounded-xl hover:scale-[0.98] transition-transform z-10 shadow-lg">
-              Check In
+            }} className="bg-slate-800 border border-slate-700 text-slate-200 w-full max-w-[240px] font-bold text-[15px] py-3.5 rounded-xl hover:bg-slate-700 transition-colors">
+              출석 체크
             </button>
           </div>
         </div>
