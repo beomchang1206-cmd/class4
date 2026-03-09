@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
     try {
-        // 프론트엔드에서 보낸 알림 정보 받기
         const { title, message, send_after, subject } = await req.json();
 
         const ONESIGNAL_APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
@@ -18,12 +17,12 @@ export async function POST(req: Request) {
             contents: { en: message, ko: message },
         };
 
-        // ⏰ 예약 시간이 있으면 설정
+        // ⏰ 예약 시간이 있으면 OneSignal에 예약 세팅!
         if (send_after) {
             body.send_after = send_after;
         }
 
-        // 🎯 타겟팅 설정 (공통이면 전체, 아니면 해당 과목 태그가 있는 학생만)
+        // 🎯 타겟팅 설정: '공통'이면 전체 발송, 특정 과목이면 그 과목 태그가 있는 학생만 저격!
         if (subject && subject !== "공통") {
             body.filters = [
                 { field: "tag", key: subject, relation: "=", value: "true" }
@@ -43,8 +42,8 @@ export async function POST(req: Request) {
 
         const data = await response.json();
         return NextResponse.json({ success: true, data });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Notification Error:', error);
-        return NextResponse.json({ success: false, error }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message || "Unknown Error" }, { status: 500 });
     }
 }

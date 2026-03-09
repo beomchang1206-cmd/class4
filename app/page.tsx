@@ -312,44 +312,47 @@ export default function Home() {
   ));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-[#f3f6f9] to-blue-50 p-4 md:p-8 font-sans text-slate-800">
       <style>{`
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         .animate-float { animation: float 3s ease-in-out infinite; }
-        @keyframes wiggle { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+        @keyframes wiggle { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
         .animate-wiggle { animation: wiggle 1s ease-in-out infinite; }
-        @keyframes bounce-s { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes bounce-s { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         .animate-bounce { animation: bounce-s 1.5s ease-in-out infinite; }
+        /* 스크롤바 숨기기 (모바일 앱처럼 깔끔하게) */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {isQnaModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center mb-4 border-b pb-4">
-              <h2 className="text-2xl font-black text-indigo-600">💬 {currentQnaSubject} 라운지</h2>
-              <button onClick={() => setIsQnaModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300">닫기</button>
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+          <div className="bg-white/80 backdrop-blur-2xl border border-white/50 rounded-3xl p-6 w-full max-w-2xl h-[80vh] flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+            <div className="flex justify-between items-center mb-4 border-b border-gray-200/50 pb-4">
+              <h2 className="text-2xl font-bold text-indigo-600 tracking-tight">💬 {currentQnaSubject} 라운지</h2>
+              <button onClick={() => setIsQnaModalOpen(false)} className="bg-gray-100/80 text-gray-600 px-5 py-2 rounded-2xl font-semibold hover:bg-gray-200 transition-colors">닫기</button>
             </div>
 
-            <div className="flex-1 overflow-y-auto mb-4 pr-2 flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto mb-4 pr-2 flex flex-col gap-3 hide-scrollbar">
               {qnaPosts.length > 0 ? qnaPosts.map(post => (
-                <div key={post.id} className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                <div key={post.id} className="bg-indigo-50/70 p-4 rounded-2xl border border-indigo-100/50 shadow-sm">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-black text-indigo-700 text-sm">👤 {post.author_name}</span>
-                    <span className="text-[10px] text-gray-400 font-bold">{new Date(post.created_at).toLocaleString('ko-KR')}</span>
+                    <span className="font-bold text-indigo-700 text-sm">👤 {post.author_name}</span>
+                    <span className="text-[10px] text-gray-400 font-medium">{new Date(post.created_at).toLocaleString('ko-KR')}</span>
                   </div>
-                  <p className="text-gray-800 text-sm whitespace-pre-wrap">{post.content}</p>
+                  <p className="text-slate-700 text-sm whitespace-pre-wrap">{post.content}</p>
                 </div>
               )) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <span className="text-4xl mb-2">📭</span>
-                  <p className="font-bold">아직 올라온 질문이 없습니다. 첫 글을 남겨보세요!</p>
+                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                  <span className="text-4xl mb-3 opacity-50">📭</span>
+                  <p className="font-semibold">아직 올라온 질문이 없습니다. 첫 글을 남겨보세요!</p>
                 </div>
               )}
             </div>
 
-            <div className="mt-auto border-t pt-4 flex gap-2">
+            <div className="mt-auto border-t border-gray-200/50 pt-4 flex gap-3">
               <textarea
-                className="flex-1 border-2 border-gray-100 rounded-xl p-3 resize-none focus:outline-none focus:border-indigo-300"
+                className="flex-1 bg-white/60 border border-gray-200/60 rounded-2xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all shadow-inner"
                 rows={2}
                 placeholder="궁금한 점이나 정보를 공유해 보세요!"
                 value={newQnaContent}
@@ -374,7 +377,7 @@ export default function Home() {
                   setNewQnaContent("");
                   fetchQnaPosts(currentQnaSubject);
                 }}
-                className="bg-indigo-600 text-white font-black px-6 rounded-xl hover:bg-indigo-700 transition shadow-md"
+                className="bg-indigo-600 text-white font-bold px-7 rounded-2xl hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95"
               >
                 등록
               </button>
@@ -384,16 +387,16 @@ export default function Home() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h2 className="text-2xl font-black mb-4">📝 새 공지 작성</h2>
-            <select className="w-full border rounded-lg p-2 mb-4 bg-white" value={formSubject} onChange={(e) => setFormSubject(e.target.value)}>
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white/90 backdrop-blur-2xl border border-white/50 rounded-3xl p-6 w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+            <h2 className="text-2xl font-bold tracking-tight mb-5 text-slate-800">📝 새 공지 작성</h2>
+            <select className="w-full bg-white/70 border border-gray-200 rounded-2xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500/30" value={formSubject} onChange={(e) => setFormSubject(e.target.value)}>
               {rawSubjects.length > 0 ? rawSubjects.map((sub: string) => <option key={sub} value={sub}>{sub}</option>) : SUBJECT_LIST.map(sub => <option key={sub} value={sub}>{sub}</option>)}
             </select>
-            <input type="date" className="w-full border rounded-lg p-2 mb-4 bg-white" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
-            <textarea className="w-full border rounded-lg p-2 mb-6 bg-white" rows={3} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="준비물을 적어주세요" />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-200 rounded-lg">취소</button>
+            <input type="date" className="w-full bg-white/70 border border-gray-200 rounded-2xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500/30" value={formDate} onChange={(e) => setFormDate(e.target.value)} />
+            <textarea className="w-full bg-white/70 border border-gray-200 rounded-2xl p-3 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none" rows={3} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="준비물을 적어주세요" />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 bg-gray-100 text-gray-600 font-semibold rounded-2xl hover:bg-gray-200 transition-colors">취소</button>
               <button onClick={async () => {
                 if (!formContent || !formDate) return alert("내용을 입력하세요!");
 
@@ -412,120 +415,122 @@ export default function Home() {
 
                 setIsModalOpen(false); setFormContent(""); fetchNotice();
                 alert("공지가 등록되었고, 즉시 알림 및 D-7 / D-1 자동 알림이 세팅되었습니다! ⏰");
-              }} className="px-4 py-2 bg-blue-500 text-white rounded-lg">등록</button>
+              }} className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95">등록</button>
             </div>
           </div>
         </div>
       )}
 
-      <header className="mb-8 flex justify-between items-end flex-wrap gap-4">
+      <header className="mb-10 flex justify-between items-end flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-black italic text-blue-600">11학년 🐲 오름 OREUM</h1>
-          <p className="text-gray-500 font-bold">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 pb-1">
+            11학년 오름 OREUM
+          </h1>
+          <p className="text-slate-500 font-medium tracking-wide mt-1">{currentUser ? `${currentUser.name}님, 오늘도 파이팅!` : "로그인이 필요합니다."}</p>
         </div>
         <div className="flex items-center gap-2">
           {!currentUser ? (
-            <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 transition">로그인</button>
+            <button onClick={() => { const n = window.prompt("이름:"); if (n) checkAndLoginUser(n); }} className="bg-blue-600/90 backdrop-blur-md text-white px-7 py-2.5 rounded-2xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all active:scale-95">로그인</button>
           ) : (
-            <button onClick={handleLogout} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition">로그아웃</button>
+            <button onClick={handleLogout} className="bg-white/60 backdrop-blur-md border border-gray-200 text-slate-600 px-5 py-2.5 rounded-2xl font-semibold shadow-sm hover:bg-white transition-all active:scale-95">로그아웃</button>
           )}
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-white rounded-3xl p-6 shadow-md border-2 border-red-50 flex flex-col h-[460px]">
-          <div className="flex justify-between items-center mb-4 border-b pb-4">
-            <h2 className="text-2xl font-black">🚨 수행평가 및 준비물</h2>
-            {currentUser && <button onClick={() => setIsModalOpen(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm hover:bg-red-600 transition">+ 추가</button>}
+        <div className="md:col-span-2 bg-white/60 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col h-[460px]">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-200/60 pb-4">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-800">🚨 수행평가 및 준비물</h2>
+            {currentUser && <button onClick={() => setIsModalOpen(true)} className="bg-rose-500/90 backdrop-blur-md text-white px-5 py-2 rounded-2xl font-bold text-sm shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all active:scale-95">+ 추가</button>}
           </div>
-          <div className="flex flex-col gap-3 overflow-y-auto pr-2">
+          <div className="flex flex-col gap-4 overflow-y-auto pr-2 pb-2 hide-scrollbar">
             {pendingNotices.length > 0 ? pendingNotices.map(n => (
-              <div key={n.id} className="bg-red-50/50 p-4 rounded-2xl border border-red-100">
-                <div className="flex gap-2 mb-1 items-center">
-                  <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded">{n.subject}</span>
-                  <span className="text-[10px] font-bold text-gray-400">📅 {n.target_date}</span>
+              <div key={n.id} className="bg-white/80 p-5 rounded-2xl shadow-sm border border-red-50 hover:shadow-md transition-shadow">
+                <div className="flex gap-2 mb-2 items-center">
+                  <span className="text-[11px] font-bold bg-rose-100 text-rose-600 px-2.5 py-1 rounded-lg">{n.subject}</span>
+                  <span className="text-[11px] font-semibold text-slate-400">📅 {n.target_date}</span>
                 </div>
-                <p className="text-gray-800 font-medium text-sm whitespace-pre-wrap mt-2">{n.content}</p>
+                <p className="text-slate-700 font-medium text-sm whitespace-pre-wrap mt-1 leading-relaxed">{n.content}</p>
               </div>
-            )) : <p className="text-center py-10 text-gray-400 font-bold">깔끔하네요! 등록된 공지가 없습니다. ☕</p>}
+            )) : <div className="flex flex-col items-center justify-center h-full opacity-50"><span className="text-4xl mb-2">☕️</span><p className="text-slate-500 font-medium">깔끔하네요! 등록된 공지가 없습니다.</p></div>}
           </div>
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="bg-blue-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full">
-            <span className="absolute top-4 left-4 bg-yellow-400 text-blue-900 text-[10px] font-black px-2 py-0.5 rounded-full">1위 마스코트</span>
-            <div className={`text-6xl mb-1 mt-3 ${mStatus.anime}`}>{mStatus.emoji}</div>
-            <h2 className="text-sm font-black">{mStatus.sName} (Lv.{mStatus.level})</h2>
-            <div className="w-full max-w-[150px] bg-blue-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
-              <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${mStatus?.progress || 0}%` }}></div>
+          <div className="bg-gradient-to-br from-blue-500/90 to-indigo-600/90 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_30px_rgba(79,70,229,0.2)] border border-white/20 flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full overflow-hidden">
+            <span className="absolute top-4 left-5 bg-white/20 backdrop-blur-md text-white border border-white/30 text-[11px] font-bold px-3 py-1 rounded-xl shadow-sm">1위 마스코트</span>
+            <div className={`text-6xl mb-2 mt-4 drop-shadow-md ${mStatus.anime}`}>{mStatus.emoji}</div>
+            <h2 className="text-[15px] font-extrabold tracking-wide">{mStatus.sName} (Lv.{mStatus.level})</h2>
+            <div className="w-full max-w-[160px] bg-black/20 backdrop-blur-sm rounded-full h-2.5 mt-3 mb-1 overflow-hidden border border-white/10">
+              <div className="bg-gradient-to-r from-amber-300 to-yellow-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${mStatus?.progress || 0}%` }}></div>
             </div>
-            <p className="text-[10px] font-bold text-blue-200">다음 진화까지: {mStatus.remXp} XP</p>
+            <p className="text-[10px] font-medium text-blue-100 opacity-90 tracking-wide mt-1">다음 진화까지: {mStatus.remXp} XP</p>
           </div>
 
-          <div className="bg-indigo-600 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full">
-            <span className="absolute top-4 left-4 bg-indigo-400 text-white text-[10px] font-black px-2 py-0.5 rounded-full">나의 마스코트</span>
+          <div className="bg-gradient-to-br from-indigo-500/90 to-purple-600/90 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_30px_rgba(147,51,234,0.2)] border border-white/20 flex flex-col items-center justify-center text-white text-center relative h-[218px] w-full overflow-hidden">
+            <span className="absolute top-4 left-5 bg-white/20 backdrop-blur-md text-white border border-white/30 text-[11px] font-bold px-3 py-1 rounded-xl shadow-sm">나의 마스코트</span>
             {currentUser ? (
               <>
-                <div className={`text-6xl mb-1 mt-3 ${myStatus?.anime}`}>{myStatus?.emoji}</div>
-                <h2 className="text-sm font-black">{myStatus?.sName} (Lv.{myStatus?.level})</h2>
-                <div className="w-full max-w-[150px] bg-indigo-800 rounded-full h-2 mt-2 mb-1 overflow-hidden">
-                  <div className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${myStatus?.progress || 0}%` }}></div>
+                <div className={`text-6xl mb-2 mt-4 drop-shadow-md ${myStatus?.anime}`}>{myStatus?.emoji}</div>
+                <h2 className="text-[15px] font-extrabold tracking-wide">{myStatus?.sName} (Lv.{myStatus?.level})</h2>
+                <div className="w-full max-w-[160px] bg-black/20 backdrop-blur-sm rounded-full h-2.5 mt-3 mb-1 overflow-hidden border border-white/10">
+                  <div className="bg-gradient-to-r from-emerald-300 to-green-400 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${myStatus?.progress || 0}%` }}></div>
                 </div>
-                <p className="text-[10px] font-bold text-indigo-200">다음 진화까지: {myStatus?.remXp} XP</p>
+                <p className="text-[10px] font-medium text-indigo-100 opacity-90 tracking-wide mt-1">다음 진화까지: {myStatus?.remXp} XP</p>
               </>
-            ) : <p className="text-white/50 text-sm">로그인 시 공개됩니다.</p>}
+            ) : <p className="text-white/60 text-sm font-medium">로그인 시 공개됩니다.</p>}
           </div>
         </div>
 
-        <div className="md:col-span-3 bg-white rounded-3xl p-6 shadow-md border flex flex-col">
-          <h2 className="text-2xl font-black mb-4">💬 내 과목 Q&A 라운지</h2>
+        <div className="md:col-span-3 bg-white/60 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800 mb-5">💬 내 과목 Q&A 라운지</h2>
           {currentUser ? (
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-3 flex-wrap">
               {mergedSubjects.map((subj: string, i: number) => (
                 <button
                   key={i}
                   onClick={() => openQnaLounge(subj)}
-                  className="bg-indigo-50 text-indigo-700 px-4 py-3 rounded-2xl font-black shadow-sm hover:bg-indigo-100 hover:scale-105 transition active:scale-95"
+                  className="bg-white/80 text-indigo-600 border border-indigo-50/50 px-5 py-3.5 rounded-2xl font-bold shadow-sm hover:bg-indigo-50 hover:-translate-y-0.5 transition-all duration-200 active:scale-95"
                 >
                   {subj}
                 </button>
               ))}
             </div>
           ) : (
-            <div className="bg-gray-100 rounded-2xl p-6 text-center">
-              <p className="text-gray-400 font-bold">로그인하면 본인이 수강하는 과목의 비밀 라운지 문이 열립니다 🚪✨</p>
+            <div className="bg-slate-100/50 rounded-2xl p-8 text-center border border-dashed border-slate-200">
+              <p className="text-slate-400 font-semibold tracking-wide">로그인하면 본인이 수강하는 과목의 비밀 라운지 문이 열립니다 🚪✨</p>
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-md border flex flex-col h-[280px]">
-          <h2 className="text-lg font-black mb-4">🏆 실시간 랭킹</h2>
-          <div className="flex flex-col gap-3">
+        <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white flex flex-col h-[280px]">
+          <h2 className="text-xl font-bold tracking-tight text-slate-800 mb-5">🏆 실시간 랭킹</h2>
+          <div className="flex flex-col gap-4 overflow-y-auto pr-1 hide-scrollbar">
             {rankings.map((u, i) => (
-              <div key={i} className="flex justify-between items-center text-sm font-bold text-gray-700">
-                <span>{i + 1}위 {u.name}</span>
-                <span className="text-blue-600 font-black">{u.total_xp || 0} XP</span>
+              <div key={i} className="flex justify-between items-center text-[15px] bg-white/50 p-3 rounded-xl shadow-sm border border-gray-50">
+                <span className="font-bold text-slate-700"><span className={`inline-block w-6 text-center mr-1 ${i < 3 ? 'text-blue-500' : 'text-slate-400'}`}>{i + 1}</span> {u.name}</span>
+                <span className="text-blue-600 font-extrabold bg-blue-50 px-2 py-0.5 rounded-md">{u.total_xp || 0} XP</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className={`rounded-3xl p-6 shadow-md border flex flex-col items-center justify-center text-center transition-colors duration-500 h-[280px] ${isTimerActive ? 'bg-emerald-50 border-emerald-200' : 'bg-white'}`}>
-          <h2 className="text-lg font-black mb-2 flex items-center gap-2">📖 스터디 타이머</h2>
-          <div className={`text-4xl font-mono font-black mb-4 ${isTimerActive ? 'text-emerald-600' : 'text-gray-400'}`}>
-            {Math.floor(studySeconds / 60)}:{String(studySeconds % 60).padStart(2, '0')}
+        <div className={`rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border flex flex-col items-center justify-center text-center transition-all duration-500 h-[280px] ${isTimerActive ? 'bg-emerald-50/80 backdrop-blur-xl border-emerald-200/60 shadow-[0_0_30px_rgba(16,185,129,0.15)]' : 'bg-white/60 backdrop-blur-xl border-white'}`}>
+          <h2 className="text-lg font-bold text-slate-700 tracking-tight mb-2">📖 스터디 타이머</h2>
+          <div className={`text-6xl font-mono font-black mb-6 tracking-tighter ${isTimerActive ? 'text-emerald-500 drop-shadow-sm' : 'text-slate-300'}`}>
+            {Math.floor(studySeconds / 60)}<span className="opacity-50">:</span>{String(studySeconds % 60).padStart(2, '0')}
           </div>
           {isTimerActive ? (
-            <button onClick={stopTimer} className="bg-red-500 text-white px-8 py-2 rounded-xl font-bold shadow-md active:scale-95">종료 및 저장</button>
+            <button onClick={stopTimer} className="bg-rose-500 text-white px-10 py-3.5 rounded-2xl font-bold shadow-lg shadow-rose-500/30 active:scale-95 transition-all">종료 및 저장</button>
           ) : (
-            <button onClick={startTimer} className="bg-emerald-500 text-white px-8 py-2 rounded-xl font-bold shadow-md active:scale-95">공부 시작</button>
+            <button onClick={startTimer} className="bg-emerald-500 text-white px-10 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 active:scale-95 transition-all">공부 시작</button>
           )}
-          <p className="text-[10px] text-gray-400 mt-3">* 탭 이동 시 타이머가 취소됩니다.</p>
+          <p className="text-[11px] text-slate-400 font-medium mt-4 tracking-wide">* 탭 이동 시 타이머가 즉시 취소됩니다.</p>
         </div>
 
-        <div className="bg-gradient-to-r from-orange-400 to-rose-400 rounded-3xl p-6 shadow-md text-white flex flex-col justify-center text-center h-[280px]">
-          <h2 className="text-xl font-black mb-2 italic text-yellow-200">⏰ EARLY BIRD</h2>
-          <p className="text-xs font-medium opacity-90 mb-4 text-white">아침 06:30 ~ 07:30 등교 시 100XP!</p>
+        <div className="bg-gradient-to-br from-orange-400/90 via-red-400/90 to-rose-500/90 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-[0_8px_30px_rgba(249,115,22,0.2)] border border-white/20 text-white flex flex-col justify-center items-center text-center h-[280px] relative overflow-hidden">
+          <h2 className="text-2xl font-black tracking-tight mb-1 text-white drop-shadow-md">⏰ EARLY BIRD</h2>
+          <p className="text-sm font-medium opacity-90 mb-6 tracking-wide text-white/90">아침 06:30 ~ 07:30 등교 시 100XP!</p>
           <button onClick={async () => {
             if (!currentUser) return alert("로그인이 필요합니다!");
 
@@ -555,7 +560,7 @@ export default function Home() {
             );
 
             checkAndLoginUser(currentUser.name); fetchRankings();
-          }} className="bg-white text-orange-600 font-black py-3 rounded-2xl shadow-lg hover:scale-105 transition active:scale-95 mb-2">출석 체크</button>
+          }} className="bg-white/95 backdrop-blur-md text-orange-600 w-full max-w-[200px] font-bold text-lg py-3.5 rounded-2xl shadow-lg hover:-translate-y-1 hover:shadow-xl transition-all active:scale-95 z-10">출석 체크</button>
         </div>
       </div>
     </div>
