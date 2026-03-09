@@ -106,7 +106,7 @@ export default function Home() {
   const startTimer = () => {
     if (!currentUser) return alert("로그인이 필요합니다!");
     setIsTimerActive(true); setStudySeconds(0);
-    sendGlobalNotification("🔥 스터디 모드 온!", `${currentUser.name}님이 방금 공부를 시작했습니다.`);
+    sendGlobalNotification("🔥 스터디 모드 온!", "누군가 방금 공부를 시작했습니다.");
   };
 
   const stopTimer = async () => {
@@ -195,14 +195,12 @@ export default function Home() {
   const mergedSubjects: string[] = Array.from(new Set(rawSubjects.map((subj: string) => subj.split('(')[0].trim())));
 
   return (
-    // 🌑 눈이 편안한 깊은 슬레이트 다크 배경 적용
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/40 selection:text-white">
       <style>{`
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-float-slow { animation: float 4s ease-in-out infinite; }
         
-        /* 스크롤바 커스텀: 투박함을 없애고 얇고 세련되게 변경 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
@@ -211,7 +209,6 @@ export default function Home() {
 
       <div className="max-w-6xl mx-auto p-5 md:p-10">
 
-        {/* 💬 QnA 모달 */}
         {isQnaModalOpen && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
@@ -264,7 +261,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* 📝 공지 작성 모달 */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-md shadow-2xl">
@@ -296,7 +292,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* 🎨 [헤더] 넉넉한 여백과 명확한 텍스트 대비 */}
         <header className="mb-12 flex justify-between items-end flex-wrap gap-4 pb-6 border-b border-slate-800">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-white">
@@ -315,7 +310,6 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* 📝 공지사항 섹션 */}
           <div className="lg:col-span-2 bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col h-[500px]">
             <div className="flex justify-between items-center mb-8 pb-5 border-b border-slate-800/60">
               <h2 className="text-xl font-bold text-slate-100 flex items-center gap-3">
@@ -336,7 +330,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 🎮 마스코트 섹션 */}
           <div className="flex flex-col gap-8">
             <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col items-center justify-center text-center relative h-[234px] w-full">
               <span className="absolute top-5 left-5 bg-amber-500/10 text-amber-400 text-xs font-bold px-3 py-1 rounded-lg border border-amber-500/20">1위 랭커</span>
@@ -363,7 +356,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 💬 라운지 과목 버튼 */}
           <div className="lg:col-span-3 bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col">
             <h2 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-3">
               💬 과목별 Q&A 라운지
@@ -387,7 +379,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* 🏆 랭킹 섹션 */}
           <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col h-[320px]">
             <h2 className="text-xl font-bold text-slate-100 mb-6">🏆 명예의 전당</h2>
             <div className="flex flex-col gap-3 overflow-y-auto pr-2">
@@ -403,7 +394,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ⏱️ 스터디 타이머 */}
           <div className={`rounded-3xl p-8 border flex flex-col items-center justify-center text-center transition-colors h-[320px] relative ${isTimerActive ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-slate-900 border-slate-800'}`}>
             <h2 className="text-sm font-bold text-slate-500 tracking-widest mb-4 uppercase">Study Focus Timer</h2>
             <div className={`text-7xl font-mono font-bold tracking-tighter mb-8 ${isTimerActive ? 'text-emerald-400' : 'text-slate-300'}`}>
@@ -418,7 +408,6 @@ export default function Home() {
             <p className="text-xs text-slate-500 font-medium mt-6">* 다른 탭으로 이동 시 타이머가 취소됩니다.</p>
           </div>
 
-          {/* 🌅 얼리버드 */}
           <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col justify-center items-center text-center h-[320px]">
             <h2 className="text-2xl font-extrabold text-slate-100 mb-3">🌅 Early Bird</h2>
             <p className="text-sm font-medium text-slate-400 mb-8 leading-relaxed">아침 06:30 ~ 07:30 접속 시<br />보너스 100 XP 지급</p>
@@ -434,7 +423,7 @@ export default function Home() {
               await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: todayKey, points: 100 }]);
               await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
               alert("체크인 완료! 100XP가 지급되었습니다.");
-              sendGlobalNotification("🌅 얼리버드 체크인", `${currentUser.name}님이 기상 미션을 완료했습니다.`);
+              sendGlobalNotification("🌅 얼리버드 체크인", "누군가 기상 미션을 완료했습니다.");
               checkAndLoginUser(currentUser.name); fetchRankings();
             }} className="bg-slate-800 border border-slate-700 text-slate-200 w-full max-w-[240px] font-bold text-[15px] py-3.5 rounded-xl hover:bg-slate-700 transition-colors">
               출석 체크
