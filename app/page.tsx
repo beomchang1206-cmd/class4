@@ -106,7 +106,7 @@ export default function Home() {
   const startTimer = () => {
     if (!currentUser) return alert("로그인이 필요합니다!");
     setIsTimerActive(true); setStudySeconds(0);
-    sendGlobalNotification("🔥 스터디 모드 온!", "누군가 방금 공부를 시작했습니다.");
+    // 🚨 1. 공부 시작 알림 제거됨
   };
 
   const stopTimer = async () => {
@@ -194,6 +194,9 @@ export default function Home() {
   }
   const mergedSubjects: string[] = Array.from(new Set(rawSubjects.map((subj: string) => subj.split('(')[0].trim())));
 
+  // 🚨 4. 공지사항 필터링 로직 추가 ('공통'이거나 내가 듣는 과목인 경우만 표시)
+  const filteredNotices = pendingNotices.filter(n => n.subject === "공통" || rawSubjects.includes(n.subject));
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-blue-500/40 selection:text-white">
       <style>{`
@@ -211,7 +214,7 @@ export default function Home() {
 
         {isQnaModalOpen && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
+            <div className="bg-slate-90 border border-slate-800 rounded-3xl p-8 w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl">
               <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-5">
                 <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-3">
                   <span className="w-3 h-3 rounded-full bg-blue-500"></span>
@@ -248,8 +251,10 @@ export default function Home() {
                 <button
                   onClick={async () => {
                     if (!newQnaContent.trim()) return alert("내용을 입력하세요.");
-                    await supabase.from("qna").insert([{ subject: currentQnaSubject, author_name: currentUser.name, content: newQnaContent }]);
-                    sendGlobalNotification(`💬 [${currentQnaSubject}] 라운지 새 글`, `${currentUser.name}: ${newQnaContent}`, currentQnaSubject);
+                    // 🚨 3. 라운지 글 작성 시 author_name을 "익명"으로 데이터베이스에 저장
+                    await supabase.from("qna").insert([{ subject: currentQnaSubject, author_name: "익명", content: newQnaContent }]);
+                    // 🚨 3. 라운지 새 글 알림도 "익명"으로 발송
+                    sendGlobalNotification(`💬 [${currentQnaSubject}] 라운지 새 글`, `익명: ${newQnaContent}`, currentQnaSubject);
                     setNewQnaContent(""); fetchQnaPosts(currentQnaSubject);
                   }}
                   className="bg-blue-600 text-white font-semibold px-8 rounded-xl hover:bg-blue-500 transition-colors text-[15px]"
@@ -318,7 +323,8 @@ export default function Home() {
               {currentUser && <button onClick={() => setIsModalOpen(true)} className="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-slate-700 transition-colors">+ 새 공지</button>}
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto pr-3">
-              {pendingNotices.length > 0 ? pendingNotices.map(n => (
+              {/* 🚨 4. 필터링된 공지(filteredNotices)만 맵핑하여 렌더링되도록 수정 */}
+              {filteredNotices.length > 0 ? filteredNotices.map(n => (
                 <div key={n.id} className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800 hover:border-slate-600 transition-colors">
                   <div className="flex gap-3 mb-3 items-center">
                     <span className="text-xs font-bold text-blue-300 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-lg">{n.subject}</span>
@@ -326,7 +332,7 @@ export default function Home() {
                   </div>
                   <p className="text-slate-300 text-base whitespace-pre-wrap leading-relaxed">{n.content}</p>
                 </div>
-              )) : <div className="flex flex-col items-center justify-center h-full"><p className="text-slate-500 text-base font-medium">등록된 일정이 없습니다.</p></div>}
+              )) : <div className="flex flex-col items-center justify-center h-full"><p className="text-slate-500 text-base font-medium">현재 내 과목에 등록된 공지가 없습니다.</p></div>}
             </div>
           </div>
 
@@ -423,7 +429,7 @@ export default function Home() {
               await supabase.from("contributions").insert([{ user_id: currentUser.id, action_type: todayKey, points: 100 }]);
               await supabase.from("users").update({ total_xp: (currentUser.total_xp || 0) + 100 }).eq("id", currentUser.id);
               alert("체크인 완료! 100XP가 지급되었습니다.");
-              sendGlobalNotification("🌅 얼리버드 체크인", "누군가 기상 미션을 완료했습니다.");
+              // 🚨 2. 얼리버드 출석체크 알림 제거됨
               checkAndLoginUser(currentUser.name); fetchRankings();
             }} className="bg-slate-800 border border-slate-700 text-slate-200 w-full max-w-[240px] font-bold text-[15px] py-3.5 rounded-xl hover:bg-slate-700 transition-colors">
               출석 체크
